@@ -1,7 +1,7 @@
 # DummyDroidStubGen
 DummyDroidStubGen (DDSG) is a simple, yet versatile linux application to generate "Dummy" applications (known as "Stubs") that can broadcast unique intent strings.
 
-While there are a variety of use cases for DDSG, it was originally developed to reintroduce more granular gesture controls to []Lawnchair](https://github.com/LawnchairLauncher/lawnchair/).
+While there are a variety of use cases for DDSG, it was originally developed to reintroduce more granular gesture controls to [Lawnchair](https://github.com/LawnchairLauncher/lawnchair/).
 
 With the release of Lawnchair 15 Beta, the entire codebase was reworked.
 
