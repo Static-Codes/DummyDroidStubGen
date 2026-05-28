@@ -107,95 +107,6 @@ public class Functions
     ///     
     ///     Returns a ConnectionStatus object, regardless of connection status (unless the condition above is met first).
     /// </summary> 
-    // private static ConnectionStatus DoDeviceConnectionRegex(ProcessResult connectionResult) 
-    // {   
-    //     if (connectionResult.output.Count == 0)
-    //     {
-    //         WriteInformation(ConnectionSection);
-    //         WriteErrorMessage(
-    //             message: $"No connected devices were detected.",
-    //             exit: true,
-    //             exitCode: 1
-    //         );
-    //     }
-
-    //     var connectionGroups = connectionResult.output
-    //         .Where(line => line != "List of devices attached")
-    //         .SelectMany(line => ConnectionRegex().Matches(line))
-    //         .Where(match => match.Success)
-    //         .Select(match => match.Groups);
-
-        
-    //     if (!connectionGroups.Any()) 
-    //     {
-    //         return new ConnectionStatus(
-    //             Connected: false, 
-    //             Method: null,
-    //             Output: null,
-    //             Result: connectionResult
-    //         );
-    //     }
-
-    //     var captureGroups = connectionGroups.SelectMany(group => group.Values);
-
-    //     // Capture Groups Legend/Key (Pulled from RegexPatterns.ConnectionRegex())
-    //     // Index 0      -> Full line associated with the match.
-    //     // 
-    //     // --- USB Connection Group ---
-    //     // Index 1      -> "USBDeviceID"
-    //     // Index 2      -> "USBDeviceName"
-    //     // Index 3      -> "USBDeviceCodename"
-    //     // Index 4      -> "WIFITransportID"
-    //     // 
-    //     // --- WIFI/TCP Connection Group ---
-    //     // Index 5      -> "IP"
-    //     // Index 6      -> "Port"
-    //     // Index 7      -> "DeviceName"
-    //     // Index 8      -> "WIFIDeviceCodename"
-    //     // Index 9      -> "WIFITransportID"
-
-    //     var usbConnection = captureGroups.ElementAt(1).Success;
-        
-    //     var wifiConnection = captureGroups.ElementAt(2).Success && 
-    //                          captureGroups.ElementAt(3).Success;
-
-    //     if (usbConnection) 
-    //     {
-    //         var deviceID = captureGroups.ElementAt(1).Captures[0].Value;
-    //         return new (
-    //             Connected: true, 
-    //             Method: USB,
-    //             Output: new ConnectionOutput(deviceID), // Only the 14 digit alphanumeric ID is used for USB Pairing.
-    //             Result: connectionResult,
-    //             Identifier: deviceID
-    //         );
-    //     }
-
-    //     if (wifiConnection) 
-    //     {   
-    //         var deviceIP = captureGroups.ElementAt(2).Captures[0].Value;
-    //         var debugPort = captureGroups.ElementAt(3).Captures[0].Value;
-            
-    //         var output = CreateConnectionOutput(deviceIP, debugPort, captureGroups);
-    //         var deviceAddress = $"{deviceIP}:{debugPort}";
-
-    //         return new (
-    //             Connected: true, 
-    //             Method: WIFI,
-    //             Output: output,
-    //             Result: connectionResult,
-    //             Identifier: deviceAddress
-    //         );
-    //     }
-
-    //     return new ConnectionStatus(
-    //         Connected: false, 
-    //         Method: null,
-    //         Output: null,
-    //         Result: connectionResult
-    //     );
-    // }
-
     private static ConnectionStatus DoDeviceConnectionRegex(ProcessResult connectionResult) 
     {   
         var matches = connectionResult.output
@@ -262,6 +173,10 @@ public class Functions
         );
     }
 
+
+    /// <summary>
+    ///     Returns a string representing the name of the current connected device.
+    /// </summary>
     public static string GetNameOfConnectedDevice(ConnectionStatus connectionStatus) 
     {
         return connectionStatus switch
@@ -358,11 +273,6 @@ public class Functions
     {
         return device.ConnectionStatus switch 
         {
-            // { Connected: true, Method: USB }  => (
-            //     isError: false,
-            //     shouldExit: false, 
-            //     message: $"Would you like to use the device with the identifier: {device.ConnectionStatus.Identifier}?"
-            // ),
              { Connected: true, Method: USB, } => (
                 isError: false, 
                 shouldExit: false,
@@ -371,9 +281,6 @@ public class Functions
                          $"({device.ConnectionStatus.Identifier}) " +
                          "connected via USB?"
             ), 
-
-
-
 
             { Connected: true, Method: WIFI, } => (
                 isError: false, 
@@ -389,9 +296,10 @@ public class Functions
                 message: "No Android device was detected over USB.\nPlease ensure USB Debugging is enabled."
             ),
 
+            // Unlike USB connection, which does not require additional pairing, 
+            // WIFI pairing will require additional user input.    
             { Connected: false, Method: WIFI } => (
                 isError: true, 
-                // Unlike USB connection, which does not require additional pairing, WIFI pairing will require additional user input.
                 shouldExit: false, 
                 message: "No device was connected via WIFI.\nPlease ensure WIFI Debugging is enabled."
             ),
