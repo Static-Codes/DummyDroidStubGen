@@ -10,10 +10,8 @@ This reworking affected more than just gesture controls, however, these other ch
 For more information on the changes from Lawnchair 14 and Lawnchair 15, see [here](https://lawnchair.app/blog/lawnchair-15-beta-1/). 
 
 # Compatibility:
-|         Requirement          |            Value        |
-|         ----------           |         ----------      |
-|   Minimum Android Version:   |             4.4         |
-|   Minimum Android API:       |             19          |
+#### OS Version: Android 14+
+#### SDK Version: SDK 34+ 
 
 
 # TODO:
