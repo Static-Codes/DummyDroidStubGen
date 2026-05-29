@@ -19,6 +19,9 @@ internal static class Messaging
         }
     }
 
+    /// <summary> Writes an information message to the active terminal. </summary>
+    /// 
+    /// <param name="reverse">If set to true, the colored text is rendered first. </param>
     public static void WriteInformation(string whiteText = "", string coloredText = "", string textColor = "blue", string tagName = InfoTag, string tagNameColor = "blue", bool reverse = false) 
     {
         string[] validColors = ["blue", "purple", "orange"];

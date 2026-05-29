@@ -1,9 +1,7 @@
 namespace DummyDroidStubGen.Core.Helpers;
 
-using Core.Types;
 using System.Diagnostics;
 using static Global.Constants;
-using static Global.Messaging;
 
 public class PSIHelper 
 {
@@ -19,29 +17,8 @@ public class PSIHelper
             CreateNoWindow = true
         };
     }
-
-    public static ProcessStartInfo GetAndroidVersionPSI(Device device) 
-    {
-
-        if (device.ID == null) {
-            WriteErrorMessage(
-                message: "The associated Device object does not contain an Identifier.", 
-                exit: true, 
-                exitCode: 1
-            );
-        }
-
-        return new() {
-            FileName = ADBPath,
-            Arguments = $"shell -s {device.ID} getprop ro.build.version.release ",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-    }
     
-    public static ProcessStartInfo GetDeviceCheckPSI() 
+    public static ProcessStartInfo GetDeviceConnectionCheckPSI() 
     {
         var psi = new ProcessStartInfo() {
             FileName = ADBPath,
@@ -72,6 +49,23 @@ public class PSIHelper
             RedirectStandardInput = true,
             UseShellExecute = false,
             CreateNoWindow = true
+        };
+    }
+
+    public static ProcessStartInfo GetDevicePropertiesPSI(bool isUSB) 
+    {
+        return new() {
+            FileName = ADBPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            RedirectStandardInput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            Arguments = isUSB switch
+            {
+                true => "-d shell getprop",
+                false => "shell getprop"
+            }
         };
     }
 

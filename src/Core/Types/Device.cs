@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Versioning;
 
 using static ADB.Connection;
+using static Global.Messaging;
 using static Helpers.InputHelper;
 
 public class Device
@@ -76,5 +77,33 @@ public class Device
   
         this.ID = ID ?? "Unknown";
         this.Codename = Codename ?? "Unknown";
+    }
+
+    /// <summary> 
+    ///     Attempts to parse the Android OS Version from the provided DeviceProperties object. <br/>
+    ///     Also updates the AndroidAPILevel based on the associated Android OS Version. 
+    /// </summary>
+    public void SetAndroidOSVersion(DeviceProperties properties) 
+    {
+        var enumValue = AndroidOSVersion.UNKNOWN; 
+        try 
+        {
+            var parsed = Enum.TryParse<AndroidOSVersion>(
+                value: properties.GetAndroidOSVersion(), 
+                ignoreCase: true, 
+                out var result
+            );
+
+            if (parsed) {
+                enumValue = result;
+            }
+        }
+
+        catch (Exception ex) {
+            WriteErrorMessage("Unable to update Android OS Version.");
+            WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+        }
+
+        AndroidOSVersion = enumValue;
     }
 }

@@ -14,6 +14,7 @@ using static Core.Types.ADB.Connection;
 using static Global.Constants;
 using static Global.Messaging;
 
+/// <summary> Contains the core functions that are used by DummyDroidStubGen (DDSG). </summary>
 public class Functions 
 {   
     /// <summary> Prompts the user to confirm if they wish to proceed with the connected device. </summary>
@@ -54,7 +55,13 @@ public class Functions
     /// </summary>
     public static async Task<ConnectionStatus> CheckForDeviceConnection() 
     {
-        var psi = GetDeviceCheckPSI();
+        WriteInformation(
+            coloredText: "Verifying device connection status over ADB..", 
+            tagNameColor: "purple", 
+            reverse: true
+        );
+
+        var psi = GetDeviceConnectionCheckPSI();
 
         var processResult = await RunProcessAsync(psi);
 
@@ -101,7 +108,7 @@ public class Functions
             .FirstOrDefault();
 
         if (matches == null ) {
-            WriteWarningMessage("No connection regex matches were located.");
+            WriteWarningMessage("No connected devices were located over ADB..");
             return new ConnectionStatus(
                 Connected: false, 
                 Method: null, 
@@ -436,6 +443,48 @@ public class Functions
         # endregion
     }
     
+
+    /// <summary> Parses the contents returned from the command: "adb shell getprops" </summary>
+    public static Dictionary<string, string> ParseDeviceProperties(List<string> commandOutput)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var line in commandOutput)
+        {   
+            // Ensuring empty lines and lines that dont contain bracket pairs are skipped.
+            if (string.IsNullOrWhiteSpace(line) || line.Count(c => c == '[') < 2) {
+                continue;
+            }
+
+            try 
+            {
+                // The parts of the line are split by the closing bracket to isolate each section.
+                // Example: [Key]: [Value] -> ["", "Key", "Value", ""]
+                var parts = line.Split(']');
+                
+                if (parts.Length >= 3)
+                {
+                    // Locating the opening bracket in part[0] and the opening bracket in part[1]
+                    int keyStart = parts[0].IndexOf('[');
+                    int valStart = parts[1].IndexOf('[');
+
+                    if (keyStart != -1 && valStart != -1)
+                    {
+                        string key = parts[0][(keyStart + 1)..];
+                        string value = parts[1][(valStart + 1)..];
+                        dict[key] = value;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarningMessage($"Unable to parse device property: '{line}'");
+                WriteErrorMessage(ex.Message);
+            }
+        }
+
+        return dict;
+    }
 
     /// <summary>
     ///     Parses the ProcessResult object returned by RunPackageRetrieval(). <br/>

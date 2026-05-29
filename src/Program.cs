@@ -1,7 +1,7 @@
 ﻿using DummyDroidStubGen.Core.Types;
 using static DummyDroidStubGen.Core.Common.InstallationChecks;
 using static DummyDroidStubGen.Core.Helpers.FileHelper;
-using static DummyDroidStubGen.Core.Helpers.InputHelper;
+using static DummyDroidStubGen.Core.Types.ADB.Connection.ConnectionMethod;
 using static DummyDroidStubGen.Functions;
 using static DummyDroidStubGen.Global.Messaging;
 
@@ -40,6 +40,13 @@ else if (isError && !shouldExit)
 else {
     AskForDeviceConfirmation(device, connectionStatus, deviceName, message);
 }
+
+var devicePropertiesObj = new DeviceProperties();
+await devicePropertiesObj.LoadAsync(device.ConnectionStatus.Method == USB);
+
+// Create a single function that takes DeviceProperties as a parameter and executes these mutator functions.
+device.SetAndroidOSVersion(devicePropertiesObj);
+
 
 ProcessResult? packageRetrievalResult;
 
