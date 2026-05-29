@@ -1,5 +1,4 @@
-﻿using DummyDroidStubGen.Core.Common;
-using DummyDroidStubGen.Core.Types;
+﻿using DummyDroidStubGen.Core.Types;
 using static DummyDroidStubGen.Core.Common.InstallationChecks;
 using static DummyDroidStubGen.Core.Helpers.FileHelper;
 using static DummyDroidStubGen.Core.Helpers.InputHelper;
@@ -18,29 +17,13 @@ CreateAppDataSubDirectory();
 var connectionStatus = await CheckForDeviceConnection();
 string deviceName = GetNameOfConnectedDevice(connectionStatus);
 
-Device? device;
-// var whitelist = new Whitelist();
-
-if (!connectionStatus.Connected) {
-    device = new Device(name: deviceName);
-}
-
-else 
-{
-    device = new Device(
-        Name: deviceName,
-        ConnectionStatus: connectionStatus,
-        ID: $"{deviceName ?? "Android Device"} (via {connectionStatus.Method}) @ {connectionStatus.Identifier}"
-    );
-}
+Device device = CreateDevice(deviceName, connectionStatus);
 
 (bool isError, bool shouldExit, string message) = HandleConnectionStatus(device);
-
 
 if (isError && shouldExit) {
     WriteErrorMessage(message, exit: true);
 }
-
 
 else if (isError && !shouldExit) 
 {
@@ -54,31 +37,8 @@ else if (isError && !shouldExit)
     );
 }
 
-else 
-{
-    var confirmationSelection = AskForSelection(message, options: ["Yes", "No", "I don't know"]);
-
-    UserExitStatusCheck(confirmationSelection);
-
-    var deviceConfirmed = confirmationSelection == "Yes";
-    var userIsUnsure = confirmationSelection == "I don't know";
-
-    if (!deviceConfirmed && !userIsUnsure) { 
-        Environment.Exit(1); 
-    }
-
-    if (userIsUnsure) {
-        var sanitizedDeviceName = deviceName != "Unknown" ? deviceName : device.Name != "Unknown" ? device.Name : "device";
-        var sanitizedDeviceAddress = device.ConnectionStatus.Identifier != null ? $"at {device.ConnectionStatus.Identifier}" : ""; 
-        
-        var inputMessage = $"Do you wish to authorize the {sanitizedDeviceName} {sanitizedDeviceAddress}";
-
-        AskForSelection(inputMessage, ["Yes", "No"]);
-    }
-
-    if (connectionStatus.Result?.output != null) {
-        foreach (var line in connectionStatus.Result.output) { WriteDebugMessage(line); }
-    }
+else {
+    AskForDeviceConfirmation(device, connectionStatus, deviceName, message);
 }
 
 ProcessResult? packageRetrievalResult;

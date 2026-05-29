@@ -5,7 +5,6 @@ using Core.Types;
 using Core.Types.ADB.Wireless;
 using Core.Types.Packaging;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using static Core.Types.ADB.Connection.ConnectionMethod;
 using static Core.Common.InputValidation;
 using static Core.Common.RegexPatterns;
@@ -17,30 +16,35 @@ using static Global.Messaging;
 
 public class Functions 
 {   
-    /// <summary> 
-    ///     Resolves a property from the existingObject, then sets the value of that property to the passed value.
-    /// </summary>
-    private static void AddMemberToConnectionOutput(ref object? existingObject, string propertyName, string value) 
+    /// <summary> Prompts the user to confirm if they wish to proceed with the connected device. </summary>
+    public static void AskForDeviceConfirmation(Device device, ConnectionStatus connectionStatus, string deviceName, string message) 
     {
-        if (existingObject == null) {
-            existingObject = new ConnectionOutput();
+        var confirmationSelection = AskForSelection(message, options: ["Yes", "No", "I don't know"]);
+
+        UserExitStatusCheck(confirmationSelection);
+
+        var deviceConfirmed = confirmationSelection == "Yes";
+        var userIsUnsure = confirmationSelection == "I don't know";
+
+        if (!deviceConfirmed && !userIsUnsure) { 
+            Environment.Exit(1); 
         }
 
-        else if (existingObject is not ConnectionOutput) {
-            throw new ArgumentException($"Expected an instance of {nameof(ConnectionOutput)}", nameof(existingObject));
+        if (userIsUnsure) {
+            var sanitizedDeviceName = deviceName != "Unknown" ? deviceName : device.Name != "Unknown" ? device.Name : "device";
+            var sanitizedDeviceAddress = device.ConnectionStatus.Identifier != null ? $"at {device.ConnectionStatus.Identifier}" : ""; 
+            
+            var inputMessage = $"Do you wish to authorize the {sanitizedDeviceName} {sanitizedDeviceAddress}";
+
+            AskForSelection(inputMessage, ["Yes", "No"]);
         }
 
-        var propertyInfo = 
-            typeof(ConnectionOutput).GetProperty(propertyName) ?? 
-            throw new ArgumentNullException(propertyName, $"{propertyName} is not a valid property of {nameof(ConnectionOutput)}.");
-
-        // Setting the new value for the member of the existing object.
-        propertyInfo.SetValue(existingObject, value);
-        
-        ShowCaptureGroupInfo(propertyName);
+        if (connectionStatus.Result?.output != null) {
+            foreach (var line in connectionStatus.Result.output) { WriteDebugMessage(line); }
+        }
     }
-    
-    
+
+
     /// <summary> 
     ///     Performs a device connection check by executing "/usr/bin/adb devices -l". <br/>
     /// 
@@ -67,36 +71,17 @@ public class Functions
     }
 
 
-    /// <summary> 
-    ///     Requires the device IP, debug service port, and the parsed capture groups from DoDeviceConnectionRegex().
-    ///     These values will be used for the initialization of a new object of the type ConnectionOutput.
-    /// </summary>
-    private static ConnectionOutput CreateConnectionOutput(string deviceIP, string debugPort, IEnumerable<Group> captureGroups) {
-        ConnectionOutput output = new(
-            DeviceIP: deviceIP,
-            DebugPort: debugPort
-        );
-
-        var groupIndexesProcessed = 4;
-        var remainingGroupsCount = captureGroups.Count() - groupIndexesProcessed;
-
-        var remainingGroups = captureGroups.TakeLast(remainingGroupsCount);
-        
-
-        foreach (var remainingGroup in remainingGroups) 
-        {
-            if (!remainingGroup.Success) {
-                WriteInformation($"Skipping capture group: {remainingGroup.Name}");
-                continue;
-            }
-
-            var tempOutput = (object)output!;
-            AddMemberToConnectionOutput(ref tempOutput, remainingGroup.Name, remainingGroup.Captures[0].Value.Replace("_", " "));
-            output = (ConnectionOutput)tempOutput!;
-            continue;
+    /// <summary> Creates an instance of a Device object using the specified name and connection status. </summary>
+    public static Device CreateDevice(string deviceName, ConnectionStatus connectionStatus) {
+        if (!connectionStatus.Connected) {
+            return new Device(name: deviceName);
         }
 
-        return output;
+        return new Device(
+            Name: deviceName,
+            ConnectionStatus: connectionStatus,
+            ID: $"{deviceName ?? "Android Device"} (via {connectionStatus.Method}) @ {connectionStatus.Identifier}"
+        );
     }
 
 
@@ -202,10 +187,8 @@ public class Functions
     ///     If no device is found, or more than one device is connected at the same time, an exception is thrown.
     ///     Returns a tuple with an updated device object, alongside a ProcessResult object detailing the retrieval result.
     /// </summary>  
-    private static async Task<(Device device, ProcessResult packageRetrievalResult)> GetPackagesOverUSB(Device device)
+    private static async Task<(Device device, ProcessResult packageRetrievalResult)> GetPackagesOverUSB(Device device, ConnectionStatus connectionStatus)
     {
-        var connectionStatus = await CheckForDeviceConnection();
-
         if (!connectionStatus.Connected) {
             WriteErrorMessage(
                 message: $"No connected devices were detected.\n\n{ConnectionSection}",
@@ -213,9 +196,6 @@ public class Functions
                 exitCode: 1
             );
         }
-
-        // Processes the device and prompts the user for whitelisting confirmation.
-        // whitelist.HandleWhitelistSelection(device);
 
         device.ID = connectionStatus.Identifier; 
 
@@ -239,9 +219,6 @@ public class Functions
     {
         // Performing the device pairing (if needed) and connection.
         device = await PairAndConnectDeviceOverWifi(device);
-
-        // Processes the device and prompts the user for whitelisting confirmation.
-        // whitelist.HandleWhitelistSelection(device);
 
         WriteInformation("Starting retrieval operations, please wait...");
         await Task.Delay(1000);
@@ -308,6 +285,7 @@ public class Functions
         };
     }
 
+    
 
     /// <summary>
     ///     Returns a Tuple(Device, ProcessResult) <br/>
@@ -322,7 +300,7 @@ public class Functions
     public static async Task<(Device device, ProcessResult packageRetrievalResult)> RunPackageRetrieval(Device device) 
     {
         return device.ConnectionStatus.Method switch {
-            USB => await GetPackagesOverUSB(device),
+            USB => await GetPackagesOverUSB(device, device.ConnectionStatus),
             WIFI => await GetPackagesOverWIFI(device),
             _ => throw new InvalidOperationException("Invalid connection method selected, please try again.")
         };

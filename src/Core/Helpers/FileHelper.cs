@@ -31,8 +31,4 @@ public static class FileHelper
         }
         return appDataPath;
     }
-
-    public static string GetWhitelistFilePath() => Path.Combine(AppDataSubDirectory, "whitelist.json");
-
-    public static string GetWhitelistBackupFilePath() => Path.Combine(AppDataSubDirectory, "whitelist-bk.json");
 }

@@ -48,6 +48,7 @@ public class Package(string Name, PackageCategory Category, string? FriendlyName
         new("com.android.settings", PackageCategory.Commercial, FriendlyName: "Settings"),
     ];
 
+    [Obsolete("Unused but left for reference.")]
     private readonly string[] NonIconPatterns = [
         "app.*.carrierconfig2",
         "app.*.AppCompatConfig",
