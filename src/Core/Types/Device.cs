@@ -59,6 +59,7 @@ public class Device
         Codename = codename ?? "Unknown";
     }
 
+
     // This constructor is used when instantiating a new object of the type Device.
     [JsonConstructor]
     public Device(string? Name, ConnectionStatus? ConnectionStatus = null, AndroidOSVersion? androidOSVersion = null, ConnectionMethod? ConnectionMethod = null, PairingInfo? WirelessPairingInfo = null, string? ID = null, string? Codename = null)

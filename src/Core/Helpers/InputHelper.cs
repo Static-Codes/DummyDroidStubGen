@@ -99,6 +99,8 @@ public static class InputHelper
     // Adding an orange [INPUT] tag to match the logic in MakeSelectionPrompt
     private static TextPrompt<string> MakeTextPrompt(string message) => new($"[{OrangeHex}]{InputTag}[/] {message}");
 
+
+    /// <summary> Ends program execution if the provided inputString equals "Exit" </summary>
     public static void UserExitStatusCheck(string inputString) 
     {
         if (inputString.IsExitOption()) {

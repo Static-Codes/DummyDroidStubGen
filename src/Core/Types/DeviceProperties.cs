@@ -7,7 +7,7 @@ using static Functions;
 
 public class DeviceProperties 
 {
-    // The key represents the property name, and the value represents the property name.
+    // The key of this dictionary holds the property's name and the dictionary value, holds the property's value.
     private Dictionary<string, string> _properties = [];
 
     public async Task LoadAsync(bool isUSB) 
@@ -30,15 +30,9 @@ public class DeviceProperties
 
     public Dictionary<string, string> GetAllProperties() => _properties;
 
-    public string? GetAndroidOSVersion() {
-        
-        return TryGetValueOfProperty("ro.build.version.release");
-    }
+    public string? GetAndroidOSVersion() => TryGetValueOfProperty("ro.build.version.release");
 
-    public string? GetAndroidSDKVersion() {
-        
-        return TryGetValueOfProperty("ro.build.version.sdk");
-    }
+    public string? GetAndroidSDKVersion() => TryGetValueOfProperty("ro.build.version.sdk");
 
     public string? TryGetValueOfProperty(string? propertyName) 
     {
