@@ -14,16 +14,16 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, see:
 - [Beta 3.0](https://github.com/LawnchairLauncher/lawnchair/releases/tag/v15.0.0-beta3.0) 
 
 
-# Compatibility
+## Compatibility
 #### OS Version: Android 14 or higher
 #### SDK Version: SDK 34 or higher
 #### Root Support: No, see the first question on the [FAQ](./FAQ.md)
 
 
-# FAQ
+## FAQ
 Click [here](./FAQ.md) to see the dedicated FAQ page
 
-# TODO
+## TODO
 - Add Root Check and exit
 
 - Add SDK version and Android Version detection.
