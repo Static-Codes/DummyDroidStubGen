@@ -78,17 +78,3 @@ public class Device
         this.Codename = Codename ?? "Unknown";
     }
 }
-
-/// <summary> 
-///     AuthorizedDevice serves as a semantic differentiator from the standard Device object. <br/>
-///     This struct contains no additional fields, taking only a device object as a parameter. <br/>
-///     When a device is "Authorized" in the codebase, the only action that is made is an object cast. <br/>
-///     Whitelist.AuthorizeDevice(ref device) returns this casted object. To explicitly show the device is "Authorized". <br/>
-/// </summary>
-[Obsolete("Until whitelist is reintroduced, this is obsolete.")]
-[method: JsonConstructor]
-public class AuthorizedDevice(Device device)
-{
-    [JsonPropertyName("Device")]
-    public Device Device { get; set; } = device;
-}
