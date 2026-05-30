@@ -1,0 +1,5 @@
+# This file is used to solve an issue in my development environment using the "Prettier" extension on VSCode/VSCodium.
+# Without this file, either all or no files of a specific language are impacted by using:
+# "editor.formatOnSave": "true"
+
+*.json

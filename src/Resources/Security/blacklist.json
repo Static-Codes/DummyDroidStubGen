@@ -1,114 +1,31 @@
 {
   "blacklist": [
-    {
-      "package": "android",
-      "category": "System",
-      "label": "Android Framework"
-    },
-    {
-      "package": "com.android.systemui",
-      "category": "System",
-      "label": "System UI"
-    },
-    {
-      "package": "com.android.settings",
-      "category": "System",
-      "label": "Settings"
-    },
-    {
-      "package": "com.android.keyguard",
-      "category": "System",
-      "label": "Keyguard"
-    },
-    {
-      "package": "com.android.packageinstaller",
-      "category": "System",
-      "label": "Package Installer"
-    },
-    {
-      "package": "com.android.phone",
-      "category": "System",
-      "label": "Phone Service"
-    },
-    {
-      "package": "com.android.nfc",
-      "category": "System",
-      "label": "NFC Service"
-    },
-    {
-      "package": "com.android.bluetooth",
-      "category": "System",
-      "label": "Bluetooth Service"
-    },
-    {
-      "package": "com.google.android.gms",
-      "category": "System",
-      "label": "Google Play Services"
-    },
-    {
-      "package": "com.google.android.packageinstaller",
-      "category": "System",
-      "label": "Google Package Installer"
-    },
-    {
-      "package": "com.paypal.android.p2pmobile",
-      "category": "Commercial",
-      "label": "PayPal"
-    },
-    {
-      "package": "net.one97.paytm",
-      "category": "Commercial",
-      "label": "Paytm"
-    },
-    {
-      "package": "com.google.android.apps.nbu.paisa.user",
-      "category": "Commercial",
-      "label": "Google Pay"
-    },
-    {
-      "package": "com.phonepe.app",
-      "category": "Commercial",
-      "label": "PhonePe"
-    },
-    {
-      "package": "io.metamask",
-      "category": "Commercial",
-      "label": "MetaMask"
-    },
-    {
-      "package": "piuk.blockchain.android",
-      "category": "Commercial",
-      "label": "Blockchain.com Wallet"
-    },
-    {
-      "package": "com.coinbase.android",
-      "category": "Commercial",
-      "label": "Coinbase"
-    },
-    {
-      "package": "org.trustwallet.app",
-      "category": "Commercial",
-      "label": "Trust Wallet"
-    },
-    {
-      "package": "com.whatsapp.w4b",
-      "category": "Commercial",
-      "label": "WhatsApp Business"
-    },
-    {
-      "package": "org.telegram.messenger",
-      "category": "Commercial",
-      "label": "Telegram"
-    },
-    {
-      "package": "org.telegram.messenger.web",
-      "category": "Commercial",
-      "label": "Telegram Web"
-    },
-    {
-      "package": "org.signal.securesms",
-      "category": "Commercial",
-      "label": "Signal"
-    }
+    { "package": "android", "category": "System", "label": "Android Framework" },
+    { "package": "com.android.systemui", "category": "System", "label": "System UI" },
+    { "package": "com.android.settings", "category": "System", "label": "Settings" },
+    { "package": "com.android.keyguard", "category": "System", "label": "Keyguard" },
+    { "package": "com.android.packageinstaller", "category": "System", "label": "Package Installer" },
+    { "package": "com.android.phone", "category": "System", "label": "Phone Service" },
+    { "package": "com.android.nfc", "category": "System", "label": "NFC Service" },
+    { "package": "com.android.bluetooth", "category": "System", "label": "Bluetooth Service" },
+    { "package": "com.google.android.gms", "category": "System", "label": "Google Play Services" },
+    { "package": "com.google.android.packageinstaller", "category": "System", "label": "Google Package Installer" },
+    { "package": "com.infonow.bofa", "category": "Commercial", "label": "Bank of America Mobile Banking" },
+    { "package": "com.chase.sig.android", "category": "Commercial", "label": "Chase Mobile" },
+    { "package": "com.wf.wellsfargomobile", "category": "Commercial", "label": "Wells Fargo Mobile" },
+    { "package": "com.citi.citimobile", "category": "Commercial", "label": "Citi Mobile" },
+    { "package": "com.google.android.apps.authenticator2", "category": "Commercial", "label": "Google Authenticator" },
+    { "package": "com.paypal.android.p2pmobile", "category": "Commercial", "label": "PayPal" },
+    { "package": "net.one97.paytm", "category": "Commercial", "label": "Paytm" },
+    { "package": "com.google.android.apps.nbu.paisa.user", "category": "Commercial", "label": "Google Pay" },
+    { "package": "com.phonepe.app", "category": "Commercial", "label": "PhonePe" },
+    { "package": "io.metamask", "category": "Commercial", "label": "MetaMask" },
+    { "package": "piuk.blockchain.android", "category": "Commercial", "label": "Blockchain.com Wallet" },
+    { "package": "com.coinbase.android", "category": "Commercial", "label": "Coinbase" },
+    { "package": "org.trustwallet.app", "category": "Commercial", "label": "Trust Wallet" },
+    { "package": "com.whatsapp.w4b", "category": "Commercial", "label": "WhatsApp Business" },
+    { "package": "org.telegram.messenger", "category": "Commercial", "label": "Telegram" },
+    { "package": "org.telegram.messenger.web", "category": "Commercial", "label": "Telegram Web" },
+    { "package": "org.signal.securesms", "category": "Commercial", "label": "Signal" }
   ]
 }

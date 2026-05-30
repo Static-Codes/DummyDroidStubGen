@@ -22,7 +22,7 @@ public class Package(string Name, PackageCategory Category, string? Label = null
             return "System Image (android)";
         }
 
-        // Skipping PackageCategory "Settings"
+        // Skipping packages of the type PackageCategory.System
         if (Category == PackageCategory.System) {
             return $"System Package ({Name})";
         }
@@ -87,7 +87,7 @@ public class Package(string Name, PackageCategory Category, string? Label = null
             );
 
             WriteErrorMessage(
-                message: "\t- You may cause a cascading set of oddities, requiring a full system reinstallation."
+                message: "\t- You may cause general system instability, requiring a full system reinstallation."
             );
 
             var selection = AskForSelection(
@@ -119,6 +119,7 @@ public class Package(string Name, PackageCategory Category, string? Label = null
             return false;
         }
     }
+
 
     private readonly Package[] IconPatterns = [
         new(Name: "com.android.contacts", PackageCategory.Commercial, Label: "Contacts"),

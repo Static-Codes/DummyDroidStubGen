@@ -26,8 +26,6 @@ Click [here](./FAQ.md) to see the dedicated FAQ page
 ## TODO
 - Add Root Check and exit
 
-- Add SDK version and Android Version detection.
-
 - Further implement the blacklist and graylist within both the 
 stub generator and stubs themselves.
 

@@ -17,6 +17,11 @@ public class Blacklist
 
     public static bool IsBlacklisted(string packageName) 
     {
+        var isPattern = packageName.Contains('*');
+        // Add a switch statement here to catch both true and false for isPattern
+        // true => Any(p => p.Name.Contains(packageName[^1], StringComparison.OrdinalIgnoreCase))
+        // false => Any(p => p.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase));
+        
         return BlacklistedPackages.Any(p => p.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase));
     }
 }
