@@ -12,7 +12,7 @@ public class DeviceProperties
 
     public async Task LoadAsync(bool isUSB) 
     {
-        var psi = GetDevicePropertiesPSI(isUSB);
+        var psi = DevicePropertiesPSI(isUSB);
 
         var processResult = await RunProcessAsync(psi);
 

@@ -8,8 +8,10 @@ internal class Constants
     public const string AAPT2Path = "/usr/bin/aapt2";
     public const string ADBPath = "/usr/bin/adb";
     public const string APKSignerPath = "/usr/bin/apksigner";
+    public const string FindPath = "/usr/bin/find";
     public const string JavaPath = "/usr/bin/java";
     public const string JavaCompilerPath = "/usr/bin/javac";
+    public const string UnzipPath = "/usr/bin/unzip";
     public const string ZipPath = "/usr/bin/zip";
     
     public static string ApplicationName = Assembly.GetExecutingAssembly().FullName?.Split(',')[0] ?? "DummyDroidStubGen";

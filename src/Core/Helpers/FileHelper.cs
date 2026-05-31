@@ -8,7 +8,7 @@ public static class FileHelper
 
     public static readonly string AppDataDirectory = GetSystemAppDataDirectory();
     public static readonly string AppDataSubDirectory = Path.Combine(AppDataDirectory, ApplicationName);
-    
+    public static readonly string UserTmpDir = Path.GetTempPath();
     public static void CreateAppDataSubDirectory() 
     {
         if (!Directory.Exists(AppDataSubDirectory)) {
@@ -16,6 +16,9 @@ public static class FileHelper
         }
     }
 
+    public static string GetTemporaryBinaryDirectory(string appName) {
+        return Path.Combine(UserTmpDir, $"{appName}_files");
+    }
 
     /// <summary> Returns the path to the user appdata directory on the current system. </summary> 
     private static string GetSystemAppDataDirectory() 

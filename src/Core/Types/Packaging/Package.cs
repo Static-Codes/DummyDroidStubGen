@@ -7,7 +7,7 @@ using static DummyDroidStubGen.Global.Messaging;
 
 public class Package(string Name, PackageCategory Category, string? Label = null)
 {
-    public string? Label { get; set; } = Label;
+    public string? Label = Label;
     public string Name = Name;
     public PackageCategory Category = Category;
     private static readonly HttpClientHandler handler = new() {
@@ -121,7 +121,7 @@ public class Package(string Name, PackageCategory Category, string? Label = null
     }
 
 
-    private readonly Package[] IconPatterns = [
+    private static readonly Package[] IconPatterns = [
         new(Name: "com.android.contacts", PackageCategory.Commercial, Label: "Contacts"),
         new(Name: "com.android.gallery3d", PackageCategory.Commercial, Label: "Gallery"),
         new(Name: "com.android.messaging", PackageCategory.Commercial, Label: "Messaging"),
@@ -130,7 +130,7 @@ public class Package(string Name, PackageCategory Category, string? Label = null
     ];
 
     [Obsolete("Unused but left for reference.")]
-    private readonly string[] NonIconPatterns = [
+    private static readonly string[] NonIconPatterns = [
         "app.*.carrierconfig2",
         "app.*.AppCompatConfig",
         "app.*.config",

@@ -8,11 +8,14 @@ using System.Diagnostics;
 using static Core.Types.ADB.Connection.ConnectionMethod;
 using static Core.Common.InputValidation;
 using static Core.Common.RegexPatterns;
+using static Core.Helpers.FileHelper;
 using static Core.Helpers.InputHelper;
 using static Core.Helpers.PSIHelper;
 using static Core.Types.ADB.Connection;
 using static Global.Constants;
 using static Global.Messaging;
+using System.Threading.Tasks;
+using System.IO.Compression;
 
 /// <summary> Contains the core functions that are used by DummyDroidStubGen (DDSG). </summary>
 public class Functions 
@@ -61,7 +64,7 @@ public class Functions
             reverse: true
         );
 
-        var psi = GetDeviceConnectionCheckPSI();
+        var psi = DeviceConnectionCheckPSI();
 
         var processResult = await RunProcessAsync(psi);
 
@@ -188,6 +191,137 @@ public class Functions
         };
     }
 
+    public static async Task<string> GetIcon(string packageName, bool isUSB) 
+    {
+        var appName = packageName.Contains('.') ? 
+                      packageName.Split('.').Last().ToLower() : 
+                      "unknown";
+
+        WriteDebugMessage(appName);
+
+        # region Retrieving the codePath of the base.apk
+        
+        var getCodePathPSI = GetCodePathOfPackagePSI(packageName, isUSB);
+        var codePathProcess = await RunProcessAsync(getCodePathPSI);
+
+        if (codePathProcess.exitCode != 0) {
+            WriteWarningMessage($"Unable to retrieve the codepath for the package: `{packageName}`");
+            WriteErrorMessage($"codePathProcess.exitCode returned a non zero exit code: {codePathProcess.exitCode}");
+            return "";
+        }
+
+        if (codePathProcess.output.Count == 0) {
+            WriteWarningMessage($"Unable to retrieve the codepath for the package: `{packageName}`");
+            WriteErrorMessage($"codePathProcess.output.Count returned 0.");
+            return "";
+        }
+
+        # if DEBUG
+        foreach (var line in codePathProcess.output) { WriteDebugMessage(line); }
+        #endif
+
+
+        var codePathFound = codePathProcess.output[0].StartsWith("codePath=");
+
+        if (!codePathFound) {
+            WriteWarningMessage($"Unable to retrieve the codepath for the package: `{packageName}`");
+            WriteErrorMessage($"codePathFound returned false.");
+            return "";
+        }
+
+        var codePath = codePathProcess.output[0].Replace("codePath=", "");
+
+        # endregion
+
+
+        # region Extracting the base.apk using the codePath above
+
+        var extractBaseBinaryPSI = ExtractBaseBinaryPSI(packageName, appName, codePath, isUSB);
+
+        var getBaseBinaryProcess = await RunProcessAsync(extractBaseBinaryPSI);
+
+        # if DEBUG
+        foreach (var line in getBaseBinaryProcess.output) { WriteDebugMessage(line); }
+        #endif
+
+        if (getBaseBinaryProcess.exitCode != 0) {
+            WriteWarningMessage($"Unable to extract the base.apk for the package: `{packageName}`");
+            WriteErrorMessage($"getBaseBinaryProcess.exitCode returned a non zero exit code: {getBaseBinaryProcess.exitCode}");
+            return "";
+        }
+
+        # endregion
+
+
+        # region Unzipping the contents of the base.apk extracted above
+
+        var tempDir = GetTemporaryBinaryDirectory(appName);
+        var appIconPath = Path.Combine(tempDir, "app_icon.webp");
+        var apkPath = Path.Combine(tempDir, $"{appName}.apk");
+
+        using ZipArchive archive = ZipFile.OpenRead(apkPath);
+
+        var bestEntry = archive.Entries
+            .Where(e => e.FullName.EndsWith(".webp") && e.FullName.Contains("res/"))
+            .OrderByDescending(e => GetIconScore(e.FullName))
+            .FirstOrDefault();
+
+        var fallbackMenuRequired = bestEntry == null;
+
+        if (fallbackMenuRequired) {
+            // Make selection menu here;
+            return "";
+        }
+
+        if (bestEntry != null)
+        {
+            using Stream source = bestEntry.Open();
+            using FileStream destStream = File.Create(appIconPath);
+            source.CopyTo(destStream);
+        }
+
+        File.Delete(apkPath);
+
+        return appIconPath;
+
+        # endregion
+
+    }
+
+    /// <summary> Uses simple pattern matching to provide a score to the provided icon filepath. </summary>
+    private static int GetIconScore(string path) 
+    {
+        Dictionary<string, int> checks = new() {
+            // Density weighting (priorizing high-res images)
+            {"-xxxhdpi", 100 },
+            {"-xxhdpi", 80 },
+            {"-xhdpi", 60 },
+
+            // 
+            { "logo", 50 },
+            { "brand", 40 },
+            { "primary", 30 },
+
+            // Penalizing smaller or monochrome icons
+            { "notification", -50 },
+            { "small", -30 },
+            { "monochrome", -20 },
+            
+        };
+
+        var filePath = path.ToLower();
+
+        int score = 0;
+
+        foreach (var check in checks) 
+        {
+            if (filePath.Contains(check.Key)) {
+                score += check.Value;
+            }
+        }
+
+        return score;
+    }
 
     /// <summary>
     ///     Performs a check using "adb devices -l" to ensure a single device is present.
@@ -206,7 +340,7 @@ public class Functions
 
         device.ID = connectionStatus.Identifier; 
 
-        var processResult = await RunProcessAsync(psi: GetPackageListPSI());
+        var processResult = await RunProcessAsync(psi: PackageListPSI());
 
         if (processResult.exception != null) {
             throw processResult.exception;
@@ -231,7 +365,7 @@ public class Functions
         await Task.Delay(1000);
 
         var packageRetrievalResult = await RunProcessAsync(
-            psi: GetPackageListPSI(isUSB: false)
+            psi: PackageListPSI(isUSB: false)
         );
 
 
@@ -348,7 +482,7 @@ public class Functions
 
             var pairingResult = await RunProcessAsync
             (
-                psi: GetDevicePairingPSI(
+                psi: DevicePairingPSI(
                     device.WirelessPairingInfo.IP, 
                     device.WirelessPairingInfo.Port, 
                     device.WirelessPairingInfo.Code
@@ -398,7 +532,7 @@ public class Functions
         );
 
         var connectionProcess = await RunProcessAsync(
-            psi: GetDeviceConnectionPSI(deviceIP, debugPort)
+            psi: DeviceConnectionPSI(deviceIP, debugPort)
         );
 
         if (connectionProcess.exitCode != 0) {

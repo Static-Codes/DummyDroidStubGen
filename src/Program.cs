@@ -1,4 +1,6 @@
-﻿using DummyDroidStubGen.Core.Types;
+﻿using DummyDroidStubGen.Core.Helpers;
+using DummyDroidStubGen.Core.Types;
+using DummyDroidStubGen.Core.Types.Packaging;
 using static DummyDroidStubGen.Core.Common.InstallationChecks;
 using static DummyDroidStubGen.Core.Helpers.FileHelper;
 using static DummyDroidStubGen.Core.Types.ADB.Connection.ConnectionMethod;
@@ -56,3 +58,16 @@ ProcessResult? packageRetrievalResult;
 var packageCategoryInfo = ParsePackageProcessResult(packageRetrievalResult);
 
 var packageNames = packageCategoryInfo.Values;
+
+
+WriteInformation("Preparing build info menu..");
+Thread.Sleep(1500);
+
+var desiredPackageName = InputHelper.AskForInput("Please the name of the package you wish to open using this stub: ");
+var desiredPackageLabel = InputHelper.AskForInput("Please the name of the app associated with the package above: ");
+
+var desiredPackage = new Package(desiredPackageName, PackageCategory.Application, desiredPackageLabel);
+
+var iconPaths = await GetIcon(desiredPackage.Name, device.ConnectionStatus.Method == USB);
+
+Console.WriteLine(iconPaths);

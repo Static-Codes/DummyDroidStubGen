@@ -69,7 +69,12 @@ public class InstallationChecks
         return File.Exists(JavaCompilerPath);
     }
 
-    /// <summary> Checks for the existence of the Java Compiler binary at /usr/bin/javac </summary>
+    /// <summary> Checks for the existence of the zip binary at /usr/bin/unzip </summary>
+    private static bool UnzipInstalled() {
+        return File.Exists(UnzipPath);
+    }
+    
+    /// <summary> Checks for the existence of the unzip binary at /usr/bin/zip </summary>
     private static bool ZipInstalled() {
         return File.Exists(ZipPath);
     }
