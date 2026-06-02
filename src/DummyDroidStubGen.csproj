@@ -19,6 +19,12 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources/Security/blacklist.json"/>
     <EmbeddedResource Include="Resources/Security/graylist.json"/>
+    
+    <EmbeddedResource Include="Resources/Binaries/aapt2/arm64-v8a/aapt2"/>
+    <EmbeddedResource Include="Resources/Binaries/aapt2/armeabi-v7a/aapt2"/>
+    <EmbeddedResource Include="Resources/Binaries/aapt2/x86/aapt2"/>
+    <EmbeddedResource Include="Resources/Binaries/aapt2/x86_64/aapt2"/>
+
   </ItemGroup>
 
 </Project>
