@@ -4,7 +4,6 @@ using System.Reflection;
 
 internal class Constants 
 {
-    
     public const string AAPT2Path = "/usr/bin/aapt2";
     public const string ADBPath = "/usr/bin/adb";
     public const string APKSignerPath = "/usr/bin/apksigner";
@@ -14,7 +13,8 @@ internal class Constants
     public const string UnzipPath = "/usr/bin/unzip";
     public const string ZipPath = "/usr/bin/zip";
     
-    public static string ApplicationName = Assembly.GetExecutingAssembly().FullName?.Split(',')[0] ?? "DummyDroidStubGen";
+    public static Assembly _assembly = Assembly.GetExecutingAssembly();
+    public static string ApplicationName = _assembly.FullName?.Split(',')[0] ?? "DummyDroidStubGen";
 
     public const BindingFlags _privateFlag = BindingFlags.NonPublic;
     public const BindingFlags _privateStaticFlag = BindingFlags.NonPublic | BindingFlags.Static;

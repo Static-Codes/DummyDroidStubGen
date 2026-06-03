@@ -36,6 +36,7 @@ public class InstallationChecks
                 new(BinaryName: "apksigner",   BinaryPath: APKSignerPath, APKSignerInstalled ), 
                 new(BinaryName: "java",  BinaryPath: JavaPath, JavaInstalled ),
                 new(BinaryName: "javac", BinaryPath: JavaCompilerPath, Check: JavaCompilerInstalled ),
+                new(BinaryName: "unzip", BinaryPath: UnzipPath, Check: UnzipInstalled ),
                 new(BinaryName: "zip",   BinaryPath: ZipPath, Check: ZipInstalled ),
             ];
         }
