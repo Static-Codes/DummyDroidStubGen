@@ -1,51 +1,76 @@
 namespace DummyDroidStubGen.Core.Types.Packaging;
 
-using DummyDroidStubGen.Core.Extensions;
-using System.Net;
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+using DummyDroidStubGen.Core.Helpers.Security;
 using static DummyDroidStubGen.Core.Helpers.InputHelper;
+using static DummyDroidStubGen.Core.Helpers.NetworkHelper;
+using static DummyDroidStubGen.Core.Helpers.PackageHelpers;
 using static DummyDroidStubGen.Global.Messaging;
 
-public class Package(string Name, PackageCategory Category, string? Label = null)
+public class Package(string name, PackageCategory category, string? label = null)
 {
-    public string? Label = Label;
-    public string Name = Name;
-    public PackageCategory Category = Category;
-    private static readonly HttpClientHandler handler = new() {
-        AutomaticDecompression = DecompressionMethods.All
-    };
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = name;
 
-    private static readonly HttpClient client = new(handler);
     
-    public string? GetFriendlyName() 
+    [JsonPropertyName("category")]
+
+    // Handles the conversion of a category string to its enum member.
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    
+    // Setting the default value if the conversion fails.
+    [DefaultValue(PackageCategory.Other)]
+    public PackageCategory Category { get; init; } = category;
+
+
+
+    [JsonPropertyName("label")]
+    public string Label { get; init; } = GetFriendlyName(label, name, category);
+
+
+    /// <summary>
+    ///     Returns a Dictionary with PackageRule.DENY and PackageRule.WARN and their respective packages.
+    /// </summary>
+    private static Dictionary<PackageRule, List<Package>> GetDenyAndWarnList() 
     {
-        if (Name == "android") {
-            return "System Image (android)";
-        }
-
-        // Skipping packages of the type PackageCategory.System
-        if (Category == PackageCategory.System) {
-            return $"System Package ({Name})";
-        }
-
-        string? labelText = IconPatterns.Where(pattern => pattern.Name == Name)
-                                        .FirstOrDefault()?
-                                        .Label;
-
-        if (labelText != null) {
-            return labelText;
-        }
-
-        // Since some of the package names in IconPatterns, contain "com.android" this conditional is separated.
-        // This ensures that if the package is present in IconPatterns, the known Label of that Package is used.
-        if (Name.StartsWithAny(["com.android.", "com.google.android", "com.google.euiccpixel", ])) {
-            return $"System Package ({Name})";
-        }
-
-        return null;
-
-
+        return new() 
+        {
+            { PackageRule.DENY, ParseEmbeddedResourceToPackageList(BlacklistHelper.ResourcePath) },
+            { PackageRule.WARN, ParseEmbeddedResourceToPackageList(GraylistHelper.ResourcePath) },
+        };
     }
 
+    public static List<Package> GetWhitelistedPackages(Dictionary<PackageCategory, List<string>>? packageCategoryGroups) 
+    {
+        if (packageCategoryGroups == null || packageCategoryGroups.Count == 0) 
+        {
+            WriteWarningMessage("No eligible packages were located while trying to generate a stub.");
+            WriteErrorMessage("packageCategoryGroups is null or empty in Package.GetWhitelistedPackages()");
+            return [];
+        }
+
+        var denyAndWarnList = GetDenyAndWarnList();
+
+        // Flattening blocked names prior to performing additional checks to prevent additional memory allocation.
+        var blockedPackageNames = denyAndWarnList?.SelectMany(list => list.Value)
+                                                .Select(package => package.Name)
+                                                .ToHashSet() ?? [];
+
+        // Excluding Blacklisted/Graylisted packages and system packages.
+        // Map strings to Package objects.
+        return [];
+        // return [.. packageCategoryGroups
+        //     .Where(group => group.Key != PackageCategory.System)
+        //     .SelectMany(group => group.Value
+        //         .Where(packageName => !blockedPackageNames.Contains(packageName))
+        //         .Select(packageName => new Package { Name = packageName,  }))];
+    }
+    
+    /// <summary>
+    ///     Makes a query to play.google.com using the current package's name. <br/>
+    ///     This function returns true if the query has a 200 status code, otherwise, it returns false.
+    /// </summary>
     public async Task<bool> IsAlreadyPublished() 
     {
         HttpRequestMessage request = new(
@@ -70,7 +95,7 @@ public class Package(string Name, PackageCategory Category, string? Label = null
         HttpResponseMessage? response = null;
 
         try {
-            response = await client.SendAsync(request);
+            response = await ClientInstance.SendAsync(request);
         }
         catch (Exception ex) {
             WriteWarningMessage($"Unable to query 'play.google.com' for the package '{Name}'"); 
@@ -119,24 +144,4 @@ public class Package(string Name, PackageCategory Category, string? Label = null
             return false;
         }
     }
-
-
-    private static readonly Package[] IconPatterns = [
-        new(Name: "com.android.contacts", PackageCategory.Commercial, Label: "Contacts"),
-        new(Name: "com.android.gallery3d", PackageCategory.Commercial, Label: "Gallery"),
-        new(Name: "com.android.messaging", PackageCategory.Commercial, Label: "Messaging"),
-        new(Name: "com.android.phone", PackageCategory.Commercial, Label: "Phone"),
-        new(Name: "com.android.settings", PackageCategory.Commercial, Label: "Settings"),
-    ];
-
-    [Obsolete("Unused but left for reference.")]
-    private static readonly string[] NonIconPatterns = [
-        "app.*.carrierconfig2",
-        "app.*.AppCompatConfig",
-        "app.*.config",
-        "app.*.networklocation",
-        "com.*.imsservice",
-        "app.seamlessupdate.client",
-        "android",
-    ];
 }
