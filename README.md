@@ -17,19 +17,16 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, see:
 ## Compatibility
 #### OS Version: Android 14 or higher
 #### SDK Version: SDK 34 or higher
-#### Root Support: No, see the first question on the [FAQ](./FAQ.md)
+#### Root Support: Yes, but there's no added benefits
 
 
 ## FAQ
 Click [here](./FAQ.md) to see the dedicated FAQ page
 
 ## TODO
-- Add Root Check and exit
 
 - Further implement the blacklist and graylist within both the 
 stub generator and stubs themselves.
-
-- Check for insular, island, etc + If work profile is configured.
 
 - Add checks so a user cannot use the stub to launch an application that is not already installed on the system.
 
