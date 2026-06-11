@@ -1,4 +1,4 @@
-namespace DummyDroidStubGen.Core.Helpers;
+namespace DummyDroidStubGen.Core.Helpers.IO;
 
 using Spectre.Console;
 using System.Diagnostics.CodeAnalysis;
@@ -13,8 +13,11 @@ public static class InputHelper
     private static readonly Style _style = new(decoration: Decoration.Bold);
 
 
+    /// <summary> Prompts the user for input via a simple text prompt, and returns said input. </summary>    
     public static string AskForInput(string message) => AnsiConsole.Prompt(MakeTextPrompt(message));
 
+
+    /// <summary> Prompts the user to select a ConnectionMethod, either USB or WIFI. </summary>
     public static ConnectionMethod AskForConnectionMethod()
     {
         // Dynamically resolving the members of ConnectionMethod and casting each member as an object.
@@ -27,7 +30,8 @@ public static class InputHelper
         return Enum.Parse<ConnectionMethod>(promptResponse);
     }
 
-    // Selection-based prompt function(s) entry point.
+
+    /// <summary> Prompts the user to select a choice from a CLI menu of options. </summary>
     public static string AskForSelection(string message, IEnumerable<object> options, int? pageSize = null)
     {
         var sanitizedMessage = $"[{OrangeHex}]{InputTag}[/] {message}";
@@ -41,8 +45,13 @@ public static class InputHelper
         return promptResponse;
     }
     
+    /// <summary> If the current choice equals, "Exit" </summary>
     public static bool IsExitOption(this string choice) => choice.Equals(ExitChoice);
 
+
+    /// <summary> 
+    ///     Appends the choice "Exit" to the given IEnumerable of the type string. 
+    /// </summary>
     public static IEnumerable<string> MakeInputMenu(IEnumerable<string> options) {
         return options.Append(ExitChoice); 
     }
@@ -59,6 +68,19 @@ public static class InputHelper
             );
         }
 
+
+        var sanitizedOptions = 
+            options.Select(
+                opt => (
+                    opt.GetType() != typeof(string) ? 
+                    opt.ToString().EscapeMarkup() : // Handling non string options
+                    (string)opt // Handling string options
+                )
+            );
+        
+        // Adding the "Exit" menu option.
+        var finalOptions = MakeInputMenu(sanitizedOptions);
+        
         int minimumSize = 3;
 
         // If the page size is provided:
@@ -70,18 +92,7 @@ public static class InputHelper
         var safePageSize =
             pageSize != null ? 
             Math.Max((int)pageSize + 1, minimumSize) : 
-            Math.Max(options.Length, minimumSize);
-
-        var sanitizedOptions = 
-            options.Select(
-                opt => (
-                    opt.GetType() != typeof(string) ? 
-                    opt.ToString().EscapeMarkup() : // Handling non string options
-                    (string)opt // Handling string options
-                )
-            );
-        
-        var finalOptions = MakeInputMenu(sanitizedOptions);
+            Math.Max(finalOptions.Count(), minimumSize);
 
         var prompt = new SelectionPrompt<string>()
             .HighlightStyle(_style)
