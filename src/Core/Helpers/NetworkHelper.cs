@@ -14,12 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-namespace DummyDroidStubGen.Core.Types;
+using System.Net;
 
-public class ProcessResult(List<string> output, List<string> error, uint exitCode, Exception? exception)
-{
-    public List<string> Output { get; set; } = output;
-    public List<string> Error { get; set; } = error;
-    public uint ExitCode { get; set; } = exitCode;
-    public Exception? Exception { get; set; } = exception;
+namespace DummyDroidStubGen.Core.Helpers;
+
+public static class NetworkHelper {
+    private static readonly HttpClient _clientInstance = new(
+        new HttpClientHandler() {
+            AutomaticDecompression = DecompressionMethods.All
+        }
+    );
+
+    /// <summary>
+    ///     A static instance of the HttpClient that will be created once, and used for the entire runtime execution.
+    /// </summary>
+    public static HttpClient ClientInstance => _clientInstance;
 }

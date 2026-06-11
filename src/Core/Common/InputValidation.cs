@@ -2,7 +2,7 @@ namespace DummyDroidStubGen.Core.Common;
 
 using Core.Types.ADB.Wireless;
 using System.Net;
-using static Core.Helpers.InputHelper;
+using static Core.Helpers.IO.InputHelper;
 using static Global.Messaging;
 
 public class InputValidation 

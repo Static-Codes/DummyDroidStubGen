@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2026 Static Codes
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 namespace DummyDroidStubGen.Global;
 
 
@@ -24,7 +40,7 @@ internal static class Messaging
     /// <param name="reverse">If set to true, the colored text is rendered first. </param>
     public static void WriteInformation(string whiteText = "", string coloredText = "", string textColor = "blue", string tagName = InfoTag, string tagNameColor = "blue", bool reverse = false) 
     {
-        string[] validColors = ["blue", "purple", "orange"];
+        string[] validColors = ["blue", "purple", "orange", "red"];
 
         if (!validColors.Contains(textColor)) {
             WriteErrorMessage("Invalid textColor passed to WriteInformation.");
@@ -32,6 +48,7 @@ internal static class Messaging
             WriteInformation(coloredText: "\t blue", textColor: "blue");
             WriteInformation(coloredText: "\t purple", textColor: "purple");
             WriteInformation(coloredText: "\t orange", textColor: "orange");
+            WriteInformation(coloredText: "\t red", textColor: "red");
             return;
         }
 

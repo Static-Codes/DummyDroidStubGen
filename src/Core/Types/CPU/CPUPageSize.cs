@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-namespace DummyDroidStubGen.Core.Types;
+namespace DummyDroidStubGen.Core.Types.CPU;
 
-public class ProcessResult(List<string> output, List<string> error, uint exitCode, Exception? exception)
+public enum CPUPageSize 
 {
-    public List<string> Output { get; set; } = output;
-    public List<string> Error { get; set; } = error;
-    public uint ExitCode { get; set; } = exitCode;
-    public Exception? Exception { get; set; } = exception;
+    _4KB = 4096,
+    _16KB = 16384,
+    UNKNOWN = 0
 }

@@ -14,12 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-namespace DummyDroidStubGen.Core.Types;
+namespace DummyDroidStubGen.Core.Types.Packaging;
 
-public class ProcessResult(List<string> output, List<string> error, uint exitCode, Exception? exception)
+/// <summary> 
+///     Represents the built-in drawables that bundled with the Android 34 SDK. <br/>
+/// 
+///     A drawable is a vector image (similar to SVGs) that is stored in an XML-like format.
+///     
+///     If the user does not want to use a custom app icon, DDSG will pseudorandomly choose one of these enum members.
+/// </summary> 
+public class DefaultDrawable
 {
-    public List<string> Output { get; set; } = output;
-    public List<string> Error { get; set; } = error;
-    public uint ExitCode { get; set; } = exitCode;
-    public Exception? Exception { get; set; } = exception;
+    public const string CYCLONE = "@drawable/cyclone_48";
+    public const string ORBIT = "@drawable/orbit_48";
+    public const string CHESS_KNIGHT = "@drawable/chess_knight";
 }

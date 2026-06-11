@@ -14,12 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-namespace DummyDroidStubGen.Core.Types;
+namespace DummyDroidStubGen.Core.Types.CPU;
 
-public class ProcessResult(List<string> output, List<string> error, uint exitCode, Exception? exception)
+public enum CPUArchitecture 
 {
-    public List<string> Output { get; set; } = output;
-    public List<string> Error { get; set; } = error;
-    public uint ExitCode { get; set; } = exitCode;
-    public Exception? Exception { get; set; } = exception;
+    UNKNOWN = 0,
+    Arm64V8a = 1,   // DummyDroidStubGen.Resources.arm64-v8a.aapt2
+    ArmEabiV7a = 2, // DummyDroidStubGen.Resources.armeabi-v7a.aapt2
+    X86 = 3,        // DummyDroidStubGen.Resources.x86.aapt2
+    X86_64 = 4      // DummyDroidStubGen.Resources.x86-64.aapt2
 }
