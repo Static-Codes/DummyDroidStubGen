@@ -1,9 +1,25 @@
+/*
+ * Copyright (C) 2026 Static Codes
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 namespace DummyDroidStubGen.Core.Types.Packaging;
 
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using DummyDroidStubGen.Core.Helpers.Security;
-using static DummyDroidStubGen.Core.Helpers.InputHelper;
+using static DummyDroidStubGen.Core.Helpers.IO.InputHelper;
 using static DummyDroidStubGen.Core.Helpers.NetworkHelper;
 using static DummyDroidStubGen.Core.Helpers.PackageHelpers;
 using static DummyDroidStubGen.Global.Messaging;
@@ -30,18 +46,14 @@ public class Package(string name, PackageCategory category, string? label = null
 
 
     /// <summary>
-    ///     Returns a Dictionary with PackageRule.DENY and PackageRule.WARN and their respective packages.
+    ///     Returns a List of blacklisted packages that will be used in GetWhitelistedPackages().
     /// </summary>
-    private static Dictionary<PackageRule, List<Package>> GetDenyAndWarnList() 
+    private static List<Package> GetBlacklistedPackages() 
     {
-        return new() 
-        {
-            { PackageRule.DENY, ParseEmbeddedResourceToPackageList(BlacklistHelper.ResourcePath) },
-            { PackageRule.WARN, ParseEmbeddedResourceToPackageList(GraylistHelper.ResourcePath) },
-        };
+        return ParseEmbeddedResourceToPackageList(BlacklistHelper.ResourcePath);
     }
 
-    public static List<Package> GetWhitelistedPackages(Dictionary<PackageCategory, List<string>>? packageCategoryGroups) 
+    public static List<Package> GetWhitelistedPackages(Dictionary<PackageCategory, List<string>> packageCategoryGroups) 
     {
         if (packageCategoryGroups == null || packageCategoryGroups.Count == 0) 
         {
@@ -50,21 +62,19 @@ public class Package(string name, PackageCategory category, string? label = null
             return [];
         }
 
-        var denyAndWarnList = GetDenyAndWarnList();
-
-        // Flattening blocked names prior to performing additional checks to prevent additional memory allocation.
-        var blockedPackageNames = denyAndWarnList?.SelectMany(list => list.Value)
-                                                .Select(package => package.Name)
-                                                .ToHashSet() ?? [];
+        var blacklistedPackages = GetBlacklistedPackages();
 
         // Excluding Blacklisted/Graylisted packages and system packages.
-        // Map strings to Package objects.
-        return [];
-        // return [.. packageCategoryGroups
-        //     .Where(group => group.Key != PackageCategory.System)
-        //     .SelectMany(group => group.Value
-        //         .Where(packageName => !blockedPackageNames.Contains(packageName))
-        //         .Select(packageName => new Package { Name = packageName,  }))];
+        // Mapping package names to Package objects.
+        return [.. packageCategoryGroups
+            .Where(pair => pair.Key != PackageCategory.System)
+            .Where(pair => pair.Value.Any(name => blacklistedPackages.Any(a => a.Name.Contains(name))))
+            .SelectMany(pair => pair.Value.Select(
+                packageName =>  {
+                    return new Package(name: packageName, category: pair.Key);
+                }
+            ))
+        ];
     }
     
     /// <summary>

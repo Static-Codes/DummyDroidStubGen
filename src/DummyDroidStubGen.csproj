@@ -12,18 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.10.2" />
     <PackageReference Include="Spectre.Console" Version="0.55.2" />
     <PackageReference Include="NReco.Logging.File" Version="1.3.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources/Security/blacklist.json"/>
-    
-    <EmbeddedResource Include="Resources/Binaries/aapt2/arm64-v8a/aapt2"/>
-    <EmbeddedResource Include="Resources/Binaries/aapt2/armeabi-v7a/aapt2"/>
-    <EmbeddedResource Include="Resources/Binaries/aapt2/x86/aapt2"/>
-    <EmbeddedResource Include="Resources/Binaries/aapt2/x86_64/aapt2"/>
-
+    <EmbeddedResource Include="Resources/Security/blacklist.json" />
   </ItemGroup>
 
 </Project>
