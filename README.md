@@ -15,8 +15,8 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, see:
 
 
 ## Compatibility
-#### OS Version: Android 14 or higher
-#### SDK Version: SDK 34 or higher
+#### OS Version: Android 5 or higher
+#### SDK Version: SDK 21 or higher
 #### Root Support: Yes, but there's no added benefits
 
 
