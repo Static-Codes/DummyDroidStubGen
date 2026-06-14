@@ -25,7 +25,11 @@ namespace DummyDroidStubGen.Core.Types.Packaging;
 /// </summary> 
 public class DefaultDrawable
 {
-    public const string CYCLONE = "@drawable/cyclone_48";
-    public const string ORBIT = "@drawable/orbit_48";
     public const string CHESS_KNIGHT = "@drawable/chess_knight";
+    public const string CYCLONE = "@drawable/cyclone";
+    public const string DPAD = "@drawable/dpad";
+    public const string FOOTBALL = "@drawable/football";
+    public const string HAND = "@drawable/hand";
+    public const string MAP = "@drawable/map";
+    public const string SHOPPING = "@drawable/shopping";
 }

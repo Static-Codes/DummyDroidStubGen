@@ -2,4 +2,13 @@ src/obj/*
 src/bin/*
 src/packages.json
 .vscode
+src/bin*
+src/obj*
 src/properties.txt
+src/Resources/Java/OnDeviceLabelFetcher/odlf.apk.idsig
+src/Resources/Java/OnDeviceLabelFetcher/debug.keystore
+src/Resources/Java/OnDeviceLabelFetcher/compiled_resources.zip
+src/Resources/Java/OnDeviceLabelFetcher/obj/*
+src/Resources/Java/OnDeviceLabelFetcher/unaligned.apk
+src/Resources/Java/OnDeviceLabelFetcher/dex_out*
+src/Resources/Java/OnDeviceLabelFetcher/*.apk
