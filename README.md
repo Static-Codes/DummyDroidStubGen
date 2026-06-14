@@ -24,10 +24,8 @@ Click [here](./FAQ.md) to see the dedicated FAQ page
 
 ## TODO
 
-- Further implement the blacklist and graylist within both the 
+- Further implement the blacklist within both the 
 stub generator and stubs themselves.
-
-- Add checks so a user cannot use the stub to launch an application that is not already installed on the system.
 
 - Add instructions for usage, from see [here](https://developer.android.com/tools/adb)
 
