@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.staticcodes.odlf">
+
+    <!-- 
+    SDK 21 is the minimum compatible version as it introduced CrossProfileApps. 
+    https://developer.android.com/reference/android/content/pm/CrossProfileApps
+    -->
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+
+    <!--
+        Manifest Guide:
+         
+        supportsRtl=true         | Informs Android that the stub supports Right to left layout alterations.
+        exported=true            | Allows the active launcher to open the stub. 
+        noHistory=true           | Prevents the stub from being cached in Android's activity stack.
+        excludesFromRecents=true | Prevents the stub from being included in Android's Recent Apps menu.
+        launchMode=singleTask    | Specifies the stub may only be used to launch a single external package.
+    -->
+    
+    <application 
+        android:debuggable="true"
+        android:label="OnDeviceLabelFetcher" 
+        android:icon="@drawable/placeholder"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.NoTitleBar">
+
+        <activity 
+            android:name=".OnDeviceLabelFetcher"
+            android:excludeFromRecents="true"
+            android:exported="true" 
+            android:launchMode="singleTask"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
