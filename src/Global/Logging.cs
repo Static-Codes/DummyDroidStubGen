@@ -28,14 +28,14 @@ public class EventLogger
 # region Class Variables
     
     [Obsolete("This path required the creation of a new user group, then ownership of the directory being transferred.")]
-    private string OldRootAppLogDirectory = Path.Combine("/", "var", "log", ApplicationName);
+    private readonly string OldRootAppLogDirectory = Path.Combine("/", "var", "log", ApplicationName);
     
 
     /// <summary> 
     ///     Points to $HOME/.local/share/[ApplicationName]/logs/ <br/>
     ///     Where [ApplicationName] is defined in Global.Constants.
     /// </summary>
-    private string RootAppLogDirectory = Path.Combine(
+    private readonly string RootAppLogDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
         ApplicationName, 
         "logs"
@@ -116,7 +116,10 @@ public class EventLogger
     ///     Returns the current timestamp. <br/>
     ///     This value is used in place of the fileName parameter if a non-null value is not provided. 
     /// </summary>
-    private string GetCurrentTimeStamp() => DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture);
+    private static string GetCurrentTimeStamp()
+    {
+        return DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture);
+    }
 
 
     /// <summary> 
@@ -182,6 +185,8 @@ public class EventLogger
 
         _eventID++;
         
+        #pragma warning disable CA2254 // Template should be a static expression
+
         switch (logLevel)
         {
             case LogLevel.Critical:
@@ -212,6 +217,9 @@ public class EventLogger
                 _instance.Log(logLevel, line);
                 break;
         }
+
+        #pragma warning restore CA2254 // Template should be a static expression
+        
     }
     
     private bool TryCreateAppLogRootDir() 
