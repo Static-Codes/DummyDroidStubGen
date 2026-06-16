@@ -23,39 +23,43 @@
     <Compile Remove="Global/Logging.cs"/>
   </ItemGroup>
 
-  <Target Name="ZipFiles" BeforeTargets="Build">
+  <!--  https://learn.microsoft.com/en-us/visualstudio/msbuild/assigntargetpath-task?view=visualstudio -->
+  <Target Name="RemoveArtifactsAndEmbedZipFiles" BeforeTargets="AssignTargetPaths">
 
     <!-- Removing remaining build artifacts leaving only the source -->
     <Delete Files="Resources/Java/OnDeviceLabelFetcher/debug.keystore" /> 
     <Delete Files="Resources/Java/OnDeviceLabelFetcher/odlf.apk" />  
     <RemoveDir Directories="Resources/Java/OnDeviceLabelFetcher/obj" />
+    
     <!-- Compressing Resources/Java/lib to a zip archive. -->
-    <Message Text="Compressing .JAR Packages to libs.zip" />
     <ZipDirectory Overwrite="true" 
                   SourceDirectory="Resources/Java/lib" 
                   DestinationFile="$(MSBuildProjectDirectory)/Resources/libs.zip" />
-    <Message Text="Compressed to libs.zip!\n" />
 
     <!-- Compressing Resources/Java/OnDeviceLabelFetcher to a zip archive. -->
-    <Message Text="Compressing OnDeviceLabelFetcher to odlf.zip" />
     <ZipDirectory Overwrite="true" 
                   SourceDirectory="Resources/Java/OnDeviceLabelFetcher" 
                   DestinationFile="$(MSBuildProjectDirectory)/Resources/odlf.zip" />
-    <Message Text="Compressed to odlf.zip!" />
-
-  </Target>
-
-  <!-- Embedding Required App Resources. -->
-  <Target Name="EmbedFiles" BeforeTargets="Build">
-    <Message Text="Embedding Required Resources"/>
+    
+    <!-- Embedding Required App Resources. -->
+    <!-- Logical Name is used here to ensure both debug and release builds point to the right resource path. -->
     <ItemGroup>
-      <EmbeddedResource Include="Resources/libs.zip" />
-      <EmbeddedResource Include="Resources/odlf.zip" />
-      <EmbeddedResource Include="Resources/Security/blacklist.json" />
+      <EmbeddedResource Include="Resources/libs.zip">
+        <LogicalName>Resources.libs.zip</LogicalName>
+      </EmbeddedResource>
+      
+      <EmbeddedResource Include="Resources/odlf.zip">
+        <LogicalName>Resources.odlf.zip</LogicalName>
+      </EmbeddedResource>
+
+      <EmbeddedResource Include="Resources/Security/blacklist.json">
+        <LogicalName>Resources.Security.blacklist.json</LogicalName>
+      </EmbeddedResource>
     </ItemGroup>
-    <Message Text="Embedded Required Resources!" />
+
   </Target>
 
+  <!-- Deleting remaining build artifacts -->
   <Target Name="DeleteBuildArtifacts" AfterTargets="Build">
     <Message Text="Deleting leftover build artifacts" />
     <Delete Files="Resources/libs.zip" />

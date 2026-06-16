@@ -29,6 +29,9 @@ internal class Constants
     public const string UnzipPath = "/usr/bin/unzip";
     public const string ZipPath = "/usr/bin/zip";
     
+    public const string JavaLibsResourcePath = "Resources.libs.zip";
+    public const string ODLFResourcePath = "Resources.odlf.zip";
+    
     public static Assembly _assembly = Assembly.GetExecutingAssembly();
     public static string ApplicationName = _assembly.FullName?.Split(',')[0] ?? "DummyDroidStubGen";
 
