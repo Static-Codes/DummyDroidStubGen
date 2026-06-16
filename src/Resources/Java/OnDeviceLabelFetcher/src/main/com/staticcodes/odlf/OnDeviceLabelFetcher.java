@@ -14,6 +14,7 @@ import android.os.UserManager;
 import android.os.UserHandle;
 import android.util.Log;
 
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.File;
@@ -26,14 +27,14 @@ public class OnDeviceLabelFetcher extends Activity
 {
     private LauncherApps launcherApps;
     private UserManager userManager;
-
+    
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        
+
         this.launcherApps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
         this.userManager = (UserManager) getSystemService(Context.USER_SERVICE);
-        
+
         runActivity();
         finish();
     }
@@ -48,6 +49,7 @@ public class OnDeviceLabelFetcher extends Activity
         }
 
         StringBuilder builder = new StringBuilder();
+        builder.append("Package|Label\n");
 
         for (AppInfo appInfo : appInfos) 
         {

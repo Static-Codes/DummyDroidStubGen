@@ -54,15 +54,52 @@ PROFILE_ID="0"
 # Uncomment this line to install the compiled APK to a sandboxed/work profile.
 # PROFILE_ID="0"
 
-echo -e "[1/13] -> Attempting to uninstall package: $PKG_ID"  
-adb shell pm uninstall --user $PROFILE_ID "$PKG_ID"
+echo -e "[1/16] -> Attempting to uninstall package: $PKG_ID"  
+
+# Capturing both STDOut and STDIn using "2>&1"
+# This is required as adb throws an exit code of 1 for both a failed uninstallatation and a missing device.
+UNINSTALL_RESULT=$(adb shell pm uninstall --user $PROFILE_ID "$PKG_ID" 2>&1)
+
+if [ "$UNINSTALL_RESULT" = "adb: no devices/emulators found" ]; then 
+    echo -e "Unable to locate any devices connected to adb, please try again.\n"
+    exit 1
+fi
+
 sleep 1
 
-echo -e "\n[2/13] -> Compiling $APP_NAME from source..."
-./build.sh "$APP_NAME" "$PKG_DIR_STRUCTURE" "$APK_NAME"
+echo -e "\n[2/16] -> Compiling $APP_NAME from source..."
+if ! ./build.sh "$APP_NAME" "$PKG_DIR_STRUCTURE" "$APK_NAME"; then
+    exit 1
+fi
+
 sleep 1
 
-echo -e "[13/13] -> Installing $APP_NAME ($APK_NAME) to device via adb...\n"
-adb install --user $PROFILE_ID "$APK_NAME"
+echo -e "[13/16] -> Installing $APP_NAME ($APK_NAME) to device via adb..."
+if ! adb install --user $PROFILE_ID "$APK_NAME"; then
+    exit 1
+fi
 sleep 1
 
+echo -e "\n[14/16] -> Executing $APP_NAME on device via adb..."
+if ! adb shell am start -n "$PKG_ID/$PKG_ID.$APP_NAME"; then
+    exit 1
+fi
+sleep 0.5
+
+echo -e "\n[15/16] -> Reading output from $APP_NAME on device via adb..."
+
+
+OUTPUT=$(adb shell run-as "$PKG_ID" cat "/data/data/$PKG_ID/files/list.txt")
+if [ -z "$OUTPUT" ]; then
+    echo "Unable to process packages on the device."
+    exit 1
+fi
+sleep 0.5
+
+echo -e "\n[16/16] -> Removing $APP_NAME ($APK_NAME) from device via adb..."  
+if ! adb shell pm uninstall --user "$PROFILE_ID" "$PKG_ID"; then
+    exit 1
+fi
+
+echo -e "\n$OUTPUT"
+exit 1
