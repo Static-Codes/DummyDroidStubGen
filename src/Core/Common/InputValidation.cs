@@ -61,13 +61,10 @@ public class InputValidation
             return (status: false, menuChoice: "I made a mistake", issue: nameof(invalidLength));
         } 
 
-        else if (tooManyDuplicates) {
-            inputMessage = "The provided code has 4 or more of the same characters, did you intend to do this?";
-        }
-
-        else {
-            inputMessage = $"Are you positive you want to continue with the code: {code}";
-        }
+        inputMessage = tooManyDuplicates switch {
+            true => "The provided code has 4 or more of the same characters, did you intend to do this?",
+            false => $"Are you positive you want to continue with the code: {code}"
+        };
 
         menuChoice = AskForSelection(
             $"Are you positive you want to continue with the code: {code}",
@@ -87,6 +84,7 @@ public class InputValidation
 
         return (true, menuChoice, issue);
     }
+    
 
     /// <summary> Will exit if the port provided is invalid </summary>
     public static string DoCodeValidation(ref PairingInfo pairingInfo) {

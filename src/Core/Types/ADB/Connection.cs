@@ -17,6 +17,12 @@
 namespace DummyDroidStubGen.Core.Types.ADB;
 
 
+using static Common.RegexPatterns;
+using static Connection.ConnectionMethod;
+using static Helpers.PSIHelper;
+using static Functions;
+using static Global.Messaging;
+
 public class Connection 
 {
     public enum ConnectionMethod { USB, WIFI }
@@ -79,6 +85,111 @@ public class Connection
     }
     
     public enum ConnectionType { Existing, New }
+    
+    
+    /// <summary> 
+    ///     Performs a device connection check by executing "/usr/bin/adb devices -l". <br/>
+    /// 
+    ///     The output from this command is parsed with a call to DoDeviceConnectionRegex(). <br/> 
+    ///
+    ///     The result of the call to DoDeviceConnectionRegex() will be of the type ConnectionStatus.
+    /// </summary>
+    public static async Task<ConnectionStatus> CheckForDeviceConnection() 
+    {
+        WriteInformation(
+            coloredText: "Verifying device connection status over ADB..\n", 
+            tagNameColor: "purple", 
+            reverse: true
+        );
 
+        var psi = DeviceConnectionCheckPSI();
+
+        var processResult = await RunProcessAsync(psi);
+
+        if (processResult.Exception != null) {
+            throw processResult.Exception;
+        }
+
+        # if DEBUG
+            foreach (var line in processResult.Output) { WriteDebugMessage(line); }
+            foreach (var line in processResult.Error) { WriteDebugMessage(line); }
+        #endif
+
+        return DoDeviceConnectionRegex(processResult);
+    }
+
+
+    /// <summary>
+    ///     Performs a match check using a regex pattern that will handle both WIFI and USB connections through ADB. <br/>
+    /// 
+    ///     Will exit if more than one device is connected. <br/>
+    ///     
+    ///     Returns a ConnectionStatus object, regardless of connection status (unless the condition above is met first).
+    /// </summary> 
+    private static ConnectionStatus DoDeviceConnectionRegex(ProcessResult connectionResult) 
+    {   
+        var matches = connectionResult.Output
+            .Where(line => !string.IsNullOrWhiteSpace(line) && line != "List of devices attached")
+            .Select(line => ConnectionRegex().Match(line))
+            .Where(match => match.Success)
+            .FirstOrDefault();
+
+        if (matches == null ) {
+            WriteWarningMessage("No connected devices were located over ADB..");
+            return new ConnectionStatus(
+                Connected: false, 
+                Method: null, 
+                Output: null, 
+                Result: connectionResult
+            );
+        }
+
+        var usingUSB = matches.Groups["USBDeviceID"].Success;
+        var usingWIFI = matches.Groups["IP"].Success;
+
+        if (usingUSB)
+        {
+            var connectionOutput = new ConnectionOutput(
+                DeviceID: matches.Groups["USBDeviceID"].Value,
+                DeviceName: matches.Groups["USBDeviceName"].Value.Replace("_", " "),
+                Codename: matches.Groups["USBDeviceCodename"].Value,
+                TransportID: matches.Groups["USBTransportID"].Value
+            );
+            
+            return new ConnectionStatus(
+                Connected: true, 
+                Method: USB, 
+                Output: connectionOutput, 
+                Result: connectionResult, 
+                Identifier: connectionOutput.DeviceID
+            );
+        }
+
+        else if (usingWIFI)
+        {
+            var output = new ConnectionOutput(
+                DeviceIP: matches.Groups["IP"].Value,
+                DebugPort: matches.Groups["Port"].Value,
+                DeviceName: matches.Groups["DeviceName"].Value.Replace("_", " "),
+                Codename: matches.Groups["WIFIDeviceCodename"].Value,
+                TransportID: matches.Groups["TransportID"].Value
+            );
+
+            return new ConnectionStatus(
+                Connected: true, 
+                Method: WIFI, 
+                Output: output, 
+                Result: connectionResult, 
+                Identifier: $"{output.IP}:{output.Port}"
+            );
+        }
+
+        return new ConnectionStatus(
+            Connected: false, 
+            Method: null, 
+            Output: null, 
+            Result: connectionResult
+        );
+    }
     
 }

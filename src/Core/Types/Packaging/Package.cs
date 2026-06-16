@@ -24,7 +24,7 @@ using static DummyDroidStubGen.Core.Helpers.NetworkHelper;
 using static DummyDroidStubGen.Core.Helpers.PackageHelpers;
 using static DummyDroidStubGen.Global.Messaging;
 
-public class Package(string name, PackageCategory category, string? label = null)
+public class Package(string name, PackageCategory category, string? label = null, string? baseCodePath = null)
 {
     [JsonPropertyName("name")]
     public string Name { get; init; } = name;
@@ -38,6 +38,9 @@ public class Package(string name, PackageCategory category, string? label = null
     // Setting the default value if the conversion fails.
     [DefaultValue(PackageCategory.Other)]
     public PackageCategory Category { get; init; } = category;
+
+    /// <summary> The Base Code Path to the APK associated with the current package. </summary>
+    public string? BaseCodePath { get; init; }= baseCodePath;
 
 
 
@@ -64,11 +67,11 @@ public class Package(string name, PackageCategory category, string? label = null
 
         var blacklistedPackages = GetBlacklistedPackages();
 
-        // Excluding Blacklisted/Graylisted packages and system packages.
+        // Excluding Blacklisted and system packages.
         // Mapping package names to Package objects.
         return [.. packageCategoryGroups
             .Where(pair => pair.Key != PackageCategory.System)
-            .Where(pair => pair.Value.Any(name => blacklistedPackages.Any(a => a.Name.Contains(name))))
+            .Where(pair => pair.Value.Any(name => !blacklistedPackages.Any(a => a.Name.Contains(name))))
             .SelectMany(pair => pair.Value.Select(
                 packageName =>  {
                     return new Package(name: packageName, category: pair.Key);
