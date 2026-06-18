@@ -55,6 +55,8 @@
       <EmbeddedResource Include="Resources/Security/blacklist.json">
         <LogicalName>Resources.Security.blacklist.json</LogicalName>
       </EmbeddedResource>
+
+      <EmbeddedResource Include="Resources/Android/DrawableVectors/*.xml"/>
     </ItemGroup>
 
   </Target>

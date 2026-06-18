@@ -55,7 +55,10 @@ public class Device
     /// </summary>
     public int AndroidAPILevel { get; set; } = (int)AndroidOSVersion.UNKNOWN;
 
-    
+
+    /// <summary> 
+    ///     Holds internal state data that is used to identify if a device is connected to adb. 
+    /// </summary>
     public ConnectionStatus ConnectionStatus { get; set; }
 
 
@@ -161,16 +164,16 @@ public class Device
             .AppendLine("for user in $(pm list users | cut -f2 -d'{' | cut -f1 -d':'); do")
             
             // Start of Inner Loop -> Querying and iterating through each third party package in the current user handle.
-            .AppendLine("for pkg in $(pm list packages -3 --user $user | cut -d: -f2); do", spaces: 1)
+            .AppendLine("for pkg in $(pm list packages -3 --user $user | cut -d: -f2); do", spaces: 4)
             
             // Parsing the base.apk codepath of the current package in the iteration.
-            .AppendLine("path=$(pm path --user $user $pkg | grep 'base.apk$' | cut -d: -f2)", spaces: 2)
+            .AppendLine("path=$(pm path --user $user $pkg | grep 'base.apk$' | cut -d: -f2)", spaces: 8)
             
             // Ensuring the base.apk path stored in $path is set prior to echoing the result.
-            .AppendLine("[ ! -z \"$path\" ] && echo \"$pkg|$path\"", spaces: 2)
+            .AppendLine("[ ! -z \"$path\" ] && echo \"$pkg|$path\"", spaces: 8)
             
             // End of Inner Loop
-            .AppendLine("done", spaces: 1)
+            .AppendLine("done", spaces: 4)
             
             // End of Outer Loop
             .AppendLine("done")
@@ -224,9 +227,7 @@ public class Device
 
         WriteInformation("Waiting five seconds for any remaining ADB requests to process.");
         await Task.Delay(5000);
-
-        // TODO: Replace this block with a function that uses less overhead.
-        // It works well, however, it has unneccessary overhead.
+        
         // Checking `adb -d
         var connectionStatus = await CheckForDeviceConnection();
 

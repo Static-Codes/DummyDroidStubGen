@@ -39,6 +39,7 @@ internal class Constants
     public const BindingFlags _privateStaticFlag = BindingFlags.NonPublic | BindingFlags.Static;
     public const BindingFlags _publicFlag = BindingFlags.Public;
     public const BindingFlags _publicInstanceFlag = _publicFlag | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+    public const BindingFlags _publicStaticFlag = BindingFlags.Public | BindingFlags.Static;
     
     public const string ConnectionSection = "Please reference the 'Connecting Your Device' section in the project's repository.";
     public const string USBSetting = "System -> Developer options -> USB Debugging.";

@@ -14,21 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-using DummyDroidStubGen.Core.Types.Versioning;
 
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
-public class StubInfo (Package packageInfo, byte[] iconBuffer)
+public class StubInfo (Package packageInfo, StubFileStructure fileStructure, StubIconInfo iconInfo)
 {
     public Package PackageInfo = packageInfo;
-    
-    /// <summary> 
-    ///     A byte array containing the XML contents of the Android DrawableVector to be used as a logo. <br/>
-    ///     This logo will be saved at: path/to/Java/PackageName/src/res/icon.xml
-    /// </summary>
-    public byte[] IconBuffer = iconBuffer;
-    public const int MINIMUM_SDK_VERSION = 21;
-    public const int TARGET_SDK_VERSION = 36;
-    public const AndroidOSVersion MINIMUM_OS_VERSION = (AndroidOSVersion)MINIMUM_SDK_VERSION;
+    public StubFileStructure StubStructure = fileStructure;
+    public StubIconInfo IconInfo = iconInfo;
 
 }

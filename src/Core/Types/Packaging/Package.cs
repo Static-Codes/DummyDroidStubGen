@@ -158,3 +158,12 @@ public class Package(string name, PackageCategory category, string? label = null
         }
     }
 }
+
+public enum PackageCategory { Application = 0, Commercial = 1, Developer = 2, Organization = 3, System = 4, Other = 5 }
+public class PackageNameParts(string[] PartsArray)
+{
+    public string PackageType = PartsArray[0];
+    public string DeveloperName = PartsArray[1];
+    public string AppName = PartsArray[2];
+};
+public enum PackageRetrievalType { UNSET = -1, APP_NAME = 0, PACKAGE_NAME = 1 }

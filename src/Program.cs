@@ -1,20 +1,48 @@
-﻿using DummyDroidStubGen.Core.Helpers;
+﻿/*
+ * Copyright (C) 2026 Static Codes
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 using DummyDroidStubGen.Core.Types;
-using DummyDroidStubGen.Core.Types.Packaging;
 using static DummyDroidStubGen.Core.Common.InstallationChecks;
-using static DummyDroidStubGen.Core.Helpers.FileHelper;
-using static DummyDroidStubGen.Core.Types.ADB.Connection.ConnectionMethod;
+using static DummyDroidStubGen.Core.Helpers.IO.FileHelper;
+using static DummyDroidStubGen.Core.Types.ADB.Connection;
 using static DummyDroidStubGen.Functions;
 using static DummyDroidStubGen.Global.Messaging;
 
 
+// using System.Reflection;
+// using DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
+// using DummyDroidStubGen.Core.Types.Packaging;
+// using DummyDroidStubGen.Core.Types.Packaging.Stub;
+// var sfs = StubFileStructure.Create("/home/nerdy/.config/DummyDroidStubGen/Resources/", "my.test.package", "Resources/Android/DrawableVectors/cyclone.xml");
+// Console.WriteLine(sfs.JavaCodeDir);
+// var package = new Package("my.test.package", PackageCategory.Commercial, "MyTestPackage");
+
+// AndroidManifest manifest = new(sfs, package);
+// manifest.Write();
+
+// Environment.Exit(1);
+
 var binaryCheckResults = CheckForRequiredBinaries();
 
 foreach (var binaryResult in binaryCheckResults) {
-    WriteSuccessMessage($"Located required package: {binaryResult.BinaryName}");
+    WriteSuccessMessage($"Located required package:\n\t\t{binaryResult.BinaryName} -> {binaryResult.BinaryPath}\n");
 }
 
-CreateAppDataSubDirectory();
+await CreateRequiredDirectories();
 
 var connectionStatus = await CheckForDeviceConnection();
 string deviceName = GetNameOfConnectedDevice(connectionStatus);
@@ -34,40 +62,37 @@ else if (isError && !shouldExit)
     
     // The object device is overwritten here, but the old device.ConnectionStatus.Method is used in the reassignment. 
     device = new Device(
-        Name: deviceName,
-        ConnectionMethod: device.ConnectionStatus.Method
+        name: deviceName,
+        connectionMethod: device.ConnectionStatus.Method
     );
 }
 
 else {
-    AskForDeviceConfirmation(device, connectionStatus, deviceName, message);
+    AskForDeviceConfirmation(connectionStatus, message);
 }
 
 var devicePropertiesObj = new DeviceProperties();
-await devicePropertiesObj.LoadAsync(device.ConnectionStatus.Method == USB);
-
-// Create a single function that takes DeviceProperties as a parameter and executes these mutator functions.
-device.SetAndroidOSVersion(devicePropertiesObj);
+await devicePropertiesObj.LoadAsync(device);
 
 
-ProcessResult? packageRetrievalResult;
+// Updates device.Properties
+// Calls internal mutator functions
+// Frees the memory associated with devicePropertiesObj
+device.UpdateProperties(ref devicePropertiesObj);
 
-// Add logic to save a config using the Device object.
-(device, packageRetrievalResult) = await RunPackageRetrieval(device);
+// Has the user choose a package retrievel method, either:
+// 1. PackageRetrievalType.APP_NAME
+// 2. PackageRetrievalType.PACKAGE_NAME
+// The selected retrieval method is used to return a list of installed packages.
+device.SetInstalledPackages();
 
-var packageCategoryInfo = ParsePackageProcessResult(packageRetrievalResult);
-
-var packageNames = packageCategoryInfo.Values;
 
 
 WriteInformation("Preparing build info menu..");
 Thread.Sleep(1500);
 
-var desiredPackageName = InputHelper.AskForInput("Please the name of the package you wish to open using this stub: ");
-var desiredPackageLabel = InputHelper.AskForInput("Please the name of the app associated with the package above: ");
+// foreach (var package in device.InstalledThirdPartyPackages) {
+//     Console.WriteLine(package.Name);
+// }
 
-var desiredPackage = new Package(desiredPackageName, PackageCategory.Application, desiredPackageLabel);
-
-var iconPaths = await GetIcon(desiredPackage.Name, device.ConnectionStatus.Method == USB);
-
-Console.WriteLine(iconPaths);
+// var desiredPackage = new Package(desiredPackageName, PackageCategory.Application, desiredPackageLabel);

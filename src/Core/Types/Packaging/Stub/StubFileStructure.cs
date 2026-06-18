@@ -1,0 +1,123 @@
+/*
+ * Copyright (C) 2026 Static Codes
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
+
+using Core.Extensions;
+using static Global.Messaging;
+
+public class StubFileStructure 
+{
+    /// <summary> The project directory in which the stub's contents will be generated. </summary>
+    public required StubProjectDirectories Directories { get; set; }
+    
+    /// <summary> The path to the AndroidManifest.xml file, which will be used during compilation. </summary>
+    public required string ManifestFilePath { get; set; }
+
+    /// <summary> The path to the icon file that will be created and used for the compiled stub, either an XML or WEBP file. </summary>
+    public required string IconFilePath { get; set; }
+
+    
+    private static bool BackupPreviousBuild() { // TODO: IMPLEMENT ME
+        throw new NotImplementedException("Please implement me before committing.");
+    }
+
+    
+    public static StubFileStructure New(string ProjectDirectory, string PackageName, string InputIconPath) 
+    {
+        if (!Directory.Exists(ProjectDirectory)) {
+            WriteWarningMessage("Unable to create the internal directory structure for the stub.");
+            WriteErrorMessage($"The specifed directory does not exist at: {ProjectDirectory}", exit: true, exitCode: 1);
+        }
+
+        var numberOfPeriods = MemoryExtensions.Count(PackageName, '.');
+
+        if (numberOfPeriods != 2) {
+            WriteWarningMessage("Unable to create the internal directory structure for the stub.");
+            WriteErrorMessage($"Expected package name in the format: 'com.yourname.yourapp'", exit: true, exitCode: 1);
+        }
+
+        string? iconFileExt = null;
+        var iconFileType = InputIconPath.ToIconFileType(ref iconFileExt);
+
+        // TODO: Create a function using these two conditionals
+        // public static (bool converted, string? conversionPath) HandleNonNativeIconFormats()
+        ///// <summary>
+        ///// Will exit if iconFileType is UNSET or the svg conversion fails
+        ///// 
+        ///// Returns: 
+        ///// A boolean detailing if the file contents was converted. <br/> 
+        ///// A nullable string that will either be null or contain the path to the converted file.
+        ///// </summary>
+        
+        if (iconFileType == IconFileType.UNSET) {
+            WriteWarningMessage("Unable to create the internal directory structure for the stub.");
+            WriteErrorMessage(
+                message: "Unsupported file format provided, supported formats include: '.svg', '.webp', and '.xml'", 
+                exit: true, 
+                exitCode: 1
+            );
+        }
+
+        // TODO: Implement SVG to xml conversion.
+        else if (iconFileType == IconFileType.SVG) {
+            throw new NotImplementedException("Please implement me before committing");
+        }
+
+        // At this point the file will either be .webp or .xml and can be natively embedded as the Stub's icon.
+        var iconFileName = $"icon{iconFileExt}";
+
+        // PackageNameParts' constructor ensures execution will not continue if the PackageName is invalid.
+        PackageNameParts packageParts = new(PackageName.Split('.'));
+
+        // Defining the main source dir for improved readability
+        var mainSourceDir = Path.Combine(ProjectDirectory, "src", "main");
+
+        var stubProjectDirectories = new StubProjectDirectories
+        (
+            projectParentDir: ProjectDirectory,
+
+            // Creating <ProjectDirectory>/src/main/
+            mainSourceDir: mainSourceDir,
+            
+            // Creating <ProjectDirectory>/src/main/res/
+            resourceDir: Path.Combine(mainSourceDir, "res"),
+
+            // Creating: <ProjectDirectory>/src/main/<packageType>/<developerName>/<appName>
+            javaCodeDir: Path.Combine(
+                mainSourceDir,
+                packageParts.PackageType,
+                packageParts.DeveloperName,
+                packageParts.AppName
+            )
+        );
+
+        // Creating <ProjectDirectory>/src/main/res/<icon>.xml
+        var iconFilePath = Path.Combine(ProjectDirectory, "src", "main", "res", iconFileName);
+
+        // Creating: <ParentDirectory>/src/main/AndroidManifest.xml
+        var manifestFilePath = Path.Combine(mainSourceDir, "AndroidManifest.xml");
+
+        return new() {
+            Directories = stubProjectDirectories,
+            ManifestFilePath = manifestFilePath,
+            IconFilePath = iconFilePath,
+        };
+    }
+
+}
+
+

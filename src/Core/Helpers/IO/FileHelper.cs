@@ -4,6 +4,7 @@ using static Global.Messaging;
 using static Global.Constants;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 public static class FileHelper 
 {
@@ -286,5 +287,28 @@ public static class FileHelper
         return true; 
     }
 
+
+    /// <summary> 
+    ///     Attempts to serialize the provided stream object into the output variable bytes. </br>
+    ///     Returns true if this operation succeeds, otherwise false.
+    /// </summary>
+    public static bool TrySerializeStreamToByteArray(Stream stream, out byte[] bytes) 
+    {
+        bytes = [];
+        
+        try {
+            bytes = JsonSerializer.SerializeToUtf8Bytes(stream);
+        }
+
+        catch (Exception ex) 
+        {
+            WriteWarningMessage("Unable to serialize the provided icon content stream.");
+            WriteErrorMessage(ex.Message);
+            return false;
+        }
+        
+        return true;
+
+    }
 
 }
