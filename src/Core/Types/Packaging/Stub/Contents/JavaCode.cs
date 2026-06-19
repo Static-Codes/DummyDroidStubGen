@@ -33,6 +33,22 @@ public class JavaCode
         new JavaFile(FileName: "SecurityPolicy.java", Contents: [])  
     ];
 
+    /// <summary> 
+    ///     Uses the total number of lines in a script to locate the highest line number. <br/>
+    ///     The length of the located line number is then compared to length of the current line number. <br/>
+    ///     This function returns a string containing X whitespace chars, where X is the difference in these lengths.
+    /// </summary> 
+    private static string GetDebugLinePadding(int line, int totalLines) 
+    {
+        int lineLength = line.ToString().Length;
+
+        int highestDigitCount = totalLines.ToString().Length;
+        
+        int spacesNeeded = highestDigitCount - lineLength;
+        
+        return new(' ', Math.Max(0, spacesNeeded));
+    }
+
     public static bool TryGetJavaFile(string fileName, out JavaFile? file) 
     {
         file = null;
@@ -173,15 +189,18 @@ public class JavaCode
 
     }
 
+
+    /// <summary> If the application is being run via "dotnet run", the contents of the JavaFile is displayed. </summary>
     private static void RunDebugIfActive(JavaFile javaFile) 
     {
         #if DEBUG    
             foreach (var pair in javaFile.Contents) {
-                var indent = pair.Key > 99 ? "" : " ";
+                string indent = GetDebugLinePadding(pair.Key, javaFile.Contents.Count);
                 WriteDebugMessage($"Line {indent}{pair.Key}: {pair.Value}");
             }
         #endif
     }
+    
     /// <summary> Writes the GNUv3 license notice, the package name, and the class imports. </summary>
     private static void WriteJavaFileHeader(JavaFile javaFile, Package package, JavaImport[] imports) 
     {
@@ -547,10 +566,6 @@ public class JavaCode
 
         // Ending the function
         // Decreasing tabs 2 -> 1
-        WriteJavaBlockEnd(ref javaFile, ref tabs);
-
-        // Ending the class
-        // Decreasing tabs 1 -> 2
         WriteJavaBlockEnd(ref javaFile, ref tabs);
     }
 }
