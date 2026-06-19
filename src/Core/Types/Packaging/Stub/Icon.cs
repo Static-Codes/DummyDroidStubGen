@@ -5,7 +5,7 @@ using static Core.Helpers.IO.FileHelper;
 using static Global.Messaging;
 
 public enum IconFileType { UNSET = 0, XML = 1, WEBP = 2, SVG = 3 }
-public class StubIcon 
+public class Icon
 {
     /// <summary> 
     ///     A byte array containing the XML contents of the Android DrawableVector to be used as a logo. <br/>
@@ -17,7 +17,7 @@ public class StubIcon
     public IconFileType InputFileType = IconFileType.UNSET;
     public IconFileType OutputFileType = IconFileType.UNSET;
 
-    public StubIcon(string inputIconPath, string outputIconPath) 
+    public Icon(string inputIconPath, string outputIconPath) 
     {
         InputFileType = inputIconPath.ToIconFileType();
         OutputFileType = outputIconPath.ToIconFileType();
@@ -34,7 +34,7 @@ public class StubIcon
 
 public static class StubIconInfoExtension 
 {
-    public static void SetBuffer(this StubIcon iconInfo) 
+    public static void SetBuffer(this Icon iconInfo) 
     {
         // If the inputFilePath passed as a parameter is valid, the function ends here.
         if (TrySerializePathToByteArray(iconInfo.InputFilePath, out iconInfo.IconBuffer)) {

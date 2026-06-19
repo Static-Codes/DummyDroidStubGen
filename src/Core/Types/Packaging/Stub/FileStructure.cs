@@ -25,7 +25,7 @@ public class FileStructure
     public required ProjectDirectories Directories { get; set; }
 
     /// <summary> The path to the icon file that will be created and used for the compiled stub, either an XML or WEBP file. </summary>
-    public required StubIcon Icon { get; set; }
+    public required Icon Icon { get; set; }
     
     /// <summary> The path to the AndroidManifest.xml file, which will be used during compilation. </summary>
     public required string ManifestFilePath { get; set; }
@@ -116,7 +116,7 @@ public class FileStructure
     
         // Creating <ProjectDirectory>/src/main/res/<icon>.xml
         var iconFilePath = Path.Combine(stubProjectDirectories.Drawables, iconFileName);
-        var iconInfo = new StubIcon(InputIconPath, iconFilePath);
+        var iconInfo = new Icon(InputIconPath, iconFilePath);
 
         return new() {
             Directories = stubProjectDirectories,
