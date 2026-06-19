@@ -44,7 +44,7 @@ internal class Constants
     public const string ConnectionSection = "Please reference the 'Connecting Your Device' section in the project's repository.";
     public const string USBSetting = "System -> Developer options -> USB Debugging.";
     public const string WIFISetting = "System -> Developer options -> Wireless debugging -> Pair device with pairing code.";
-    public const string DebugTag = "[[DEBUG]]";
+    public const string DebugTag = "[[DEBUG]]:";
     public const string ErrorTag = "[[ERROR]]:";
     public const string InfoTag = "[[INFO]]:";
     public const string InputTag = "[[INPUT]]:";
