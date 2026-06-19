@@ -17,10 +17,9 @@
 
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
-public class StubInfo (Package packageInfo, StubFileStructure fileStructure, StubIconInfo iconInfo)
+public class StubInfo (Package packageInfo, FileStructure fileStructure)
 {
     public Package PackageInfo = packageInfo;
-    public StubFileStructure StubStructure = fileStructure;
-    public StubIconInfo IconInfo = iconInfo;
+    public FileStructure StubStructure = fileStructure;
 
 }

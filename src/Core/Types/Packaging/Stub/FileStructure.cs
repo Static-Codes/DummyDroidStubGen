@@ -19,16 +19,16 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 using Core.Extensions;
 using static Global.Messaging;
 
-public class StubFileStructure 
+public class FileStructure 
 {
     /// <summary> The project directory in which the stub's contents will be generated. </summary>
-    public required StubProjectDirectories Directories { get; set; }
+    public required ProjectDirectories Directories { get; set; }
+
+    /// <summary> The path to the icon file that will be created and used for the compiled stub, either an XML or WEBP file. </summary>
+    public required StubIcon Icon { get; set; }
     
     /// <summary> The path to the AndroidManifest.xml file, which will be used during compilation. </summary>
     public required string ManifestFilePath { get; set; }
-
-    /// <summary> The path to the icon file that will be created and used for the compiled stub, either an XML or WEBP file. </summary>
-    public required string IconFilePath { get; set; }
 
     
     private static bool BackupPreviousBuild() { // TODO: IMPLEMENT ME
@@ -36,7 +36,7 @@ public class StubFileStructure
     }
 
     
-    public static StubFileStructure New(string ProjectDirectory, string PackageName, string InputIconPath) 
+    public static FileStructure New(string ProjectDirectory, string PackageName, string InputIconPath) 
     {
         if (!Directory.Exists(ProjectDirectory)) {
             WriteWarningMessage("Unable to create the internal directory structure for the stub.");
@@ -86,7 +86,8 @@ public class StubFileStructure
         // Defining the main source dir for improved readability
         var mainSourceDir = Path.Combine(ProjectDirectory, "src", "main");
 
-        var stubProjectDirectories = new StubProjectDirectories
+
+        var stubProjectDirectories = new ProjectDirectories
         (
             projectParentDir: ProjectDirectory,
 
@@ -95,6 +96,8 @@ public class StubFileStructure
             
             // Creating <ProjectDirectory>/src/main/res/
             resourceDir: Path.Combine(mainSourceDir, "res"),
+
+            drawableDir: Path.Combine(mainSourceDir, "res", "drawable"),
 
             // Creating: <ProjectDirectory>/src/main/<packageType>/<developerName>/<appName>
             javaCodeDir: Path.Combine(
@@ -105,16 +108,20 @@ public class StubFileStructure
             )
         );
 
-        // Creating <ProjectDirectory>/src/main/res/<icon>.xml
-        var iconFilePath = Path.Combine(ProjectDirectory, "src", "main", "res", iconFileName);
-
+        // Writing the required project directories.
+        stubProjectDirectories.Write();
+        
         // Creating: <ParentDirectory>/src/main/AndroidManifest.xml
         var manifestFilePath = Path.Combine(mainSourceDir, "AndroidManifest.xml");
+    
+        // Creating <ProjectDirectory>/src/main/res/<icon>.xml
+        var iconFilePath = Path.Combine(stubProjectDirectories.Drawables, iconFileName);
+        var iconInfo = new StubIcon(InputIconPath, iconFilePath);
 
         return new() {
             Directories = stubProjectDirectories,
+            Icon = iconInfo,
             ManifestFilePath = manifestFilePath,
-            IconFilePath = iconFilePath,
         };
     }
 

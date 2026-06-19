@@ -3,9 +3,9 @@ namespace DummyDroidStubGen.Core.Extensions;
 using Core.Types.Packaging.Stub;
 using static Global.Messaging;
 
-public static class StubFileStructureExtension
+public static class FileStructureExtension
 {
-    private static void CreateProjectDirectories(StubProjectDirectories stubProjectDirectories) 
+    private static void CreateProjectDirectories(ProjectDirectories stubProjectDirectories) 
     {
         var directoryPairsEnumerable = stubProjectDirectories.AsEnumerable();
 
@@ -33,7 +33,7 @@ public static class StubFileStructureExtension
         }
     }
 
-    public static void Write(this StubProjectDirectories stubProjectDirectories) 
+    public static void Write(this ProjectDirectories stubProjectDirectories) 
     {
         CreateProjectDirectories(stubProjectDirectories);
     }

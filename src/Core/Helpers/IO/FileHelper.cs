@@ -23,12 +23,12 @@ public static class FileHelper
     /// 
     ///     This is disabled by default and can be enabled by passing the "--backup" argument.
     /// </summary>
-    private static readonly string BuildHistorySubDirectory = Path.Combine(AppDataSubDirectory, "BuildHistory");
+    public static readonly string BuildHistorySubDirectory = Path.Combine(AppDataSubDirectory, "BuildHistory");
 
     /// <summary>
     ///     The path to the subdirectory inside AppDataSubDirectory where DDSG will extract embedded resources.
     /// </summary>
-    private static readonly string ResourcesSubDirectory = Path.Combine(AppDataSubDirectory, "Resources");
+    public static readonly string ResourcesSubDirectory = Path.Combine(AppDataSubDirectory, "Resources");
     
     /// <summary>    
     ///     The extraction path to the Zip Archive embedded within the DDSG binary, it contains the required Java Libraries for stub generation.
@@ -43,7 +43,7 @@ public static class FileHelper
     /// <summary>
     ///     The subdirectory where DDSG will extract the required Java Libraries.
     /// </summary>
-    private static readonly string LibrariesSubDirectory = Path.Combine(ResourcesSubDirectory, "libs");
+    public static readonly string LibrariesSubDirectory = Path.Combine(ResourcesSubDirectory, "libs");
 
     /// <summary>
     ///     The path to inside ResourcesSubDirectory where DDSG will extract the optional OnDeviceLabelFetcher.
@@ -292,23 +292,48 @@ public static class FileHelper
     ///     Attempts to serialize the provided stream object into the output variable bytes. </br>
     ///     Returns true if this operation succeeds, otherwise false.
     /// </summary>
-    public static bool TrySerializeStreamToByteArray(Stream stream, out byte[] bytes) 
+    public static bool TrySerializePathToByteArray(string? path, out byte[] bytes) 
     {
-        bytes = [];
-        
+
         try {
-            bytes = JsonSerializer.SerializeToUtf8Bytes(stream);
+            ArgumentException.ThrowIfNullOrEmpty(path);
+            bytes = File.ReadAllBytes(path);
         }
 
         catch (Exception ex) 
         {
             WriteWarningMessage("Unable to serialize the provided icon content stream.");
             WriteErrorMessage(ex.Message);
+            bytes = [];
             return false;
         }
         
         return true;
 
+    }
+
+
+    /// <summary> 
+    ///     Attempts to serialize the provided stream object into the output variable bytes. </br>
+    ///     Returns true if this operation succeeds, otherwise false.
+    /// </summary>
+    public static bool TrySerializeStreamToByteArray(Stream stream, out byte[] bytes) 
+    {
+        try 
+        {
+            using MemoryStream memoryStream = new();
+            stream.CopyTo(memoryStream);
+            bytes = memoryStream.ToArray();
+            return true;
+        }
+        
+        catch (Exception ex) 
+        {
+            WriteWarningMessage("Unable to serialize the provided icon content stream.");
+            WriteErrorMessage(ex.Message);
+            bytes = [];
+            return false;
+        }
     }
 
 }

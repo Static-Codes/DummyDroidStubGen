@@ -32,37 +32,37 @@ public static class DefaultDrawables
 {
     public static DefaultDrawable CHESS_KNIGHT { get; } = new(
         Index: 0, 
-        ResourcePath: "Resources.Android.DrawableVectors.chess_knight.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.chess_knight.xml"
     );
 
     public static DefaultDrawable CYCLONE { get; } = new (
         Index: 1, 
-        ResourcePath: "Resources.Android.DrawableVectors.cyclone.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.cyclone.xml"
     );
     
     public static DefaultDrawable DPAD { get; } = new(
         Index: 2, 
-        ResourcePath: "Resources.Android.DrawableVectors.dpad.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.dpad.xml"
     );
     
     public static DefaultDrawable FOOTBALL { get; } = new(
         Index: 3, 
-        ResourcePath: "Resources.Android.DrawableVectors.football.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.football.xml"
     );
     
     public static DefaultDrawable HAND { get; } = new(
         Index: 4, 
-        ResourcePath: "Resources.Android.DrawableVectors.hand.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.hand.xml"
     );
     
     public static DefaultDrawable MAP { get; } = new(
         Index: 5, 
-        ResourcePath: "Resources.Android.DrawableVectors.map.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.map.xml"
     );
     
     public static DefaultDrawable SHOPPING { get; } = new(
         Index: 6, 
-        ResourcePath: "Resources.Android.DrawableVectors.shopping.xml"
+        ResourcePath: "DummyDroidStubGen.Resources.Android.DrawableVectors.shopping.xml"
     );
 
     /// <summary> 

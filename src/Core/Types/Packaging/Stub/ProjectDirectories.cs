@@ -3,10 +3,11 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using static Global.Messaging;
-public class StubProjectDirectories(
+public class ProjectDirectories(
     [Required] string projectParentDir,
     [Required] string mainSourceDir,
     [Required] string resourceDir,
+    [Required] string drawableDir,
     [Required] string javaCodeDir
 )
 {
@@ -17,7 +18,10 @@ public class StubProjectDirectories(
     public string MainSource { get; } = mainSourceDir;
 
     /// <summary> The path to the subdirectory that will store all asset files used by the stub. </summary>
-    public string Resource { get; } = resourceDir;
+    public string Resources { get; } = resourceDir;
+
+    /// <summary> The path to the subdirectory inside Resources that will hold the drawable vectors. </summary>
+    public string Drawables { get; } = drawableDir;
 
     /// <summary> The path to the directory containing the stub's .java class files </summary>
     public string JavaCode { get; } = javaCodeDir;
@@ -35,7 +39,7 @@ public class StubProjectDirectories(
         PropertyInfo[]? Properties = null;
         
         try {    
-            Properties = typeof(StubProjectDirectories).GetProperties();
+            Properties = typeof(ProjectDirectories).GetProperties();
         }
         
         catch (Exception ex)

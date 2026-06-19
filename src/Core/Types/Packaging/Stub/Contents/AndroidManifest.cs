@@ -2,25 +2,25 @@
 
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
 
+using System.Xml.Linq;
 using Types.Packaging;
 using Types.Packaging.Stub;
 using Types.Versioning;
-using System.Xml.Linq;
 using static Global.Messaging;
 
-public class AndroidManifest(StubFileStructure fileStructure, Package package) 
+public class AndroidManifest(FileStructure fileStructure, Package package) 
 {   
-    private StubFileStructure FileStructure = fileStructure;
-    private Package Package = package;
+    private readonly FileStructure FileStructure = fileStructure;
+    private readonly Package Package = package;
     public string FilePath = fileStructure.ManifestFilePath;
     public const int MINIMUM_SDK_VERSION = 21;
     public const int TARGET_SDK_VERSION = 36;
     public const AndroidOSVersion MINIMUM_OS_VERSION = (AndroidOSVersion)MINIMUM_SDK_VERSION;
-    private string[] Permissions = { "INTERACT_ACROSS_PROFILES", "QUERY_ALL_PACKAGES" };
+    private readonly string[] Permissions = ["INTERACT_ACROSS_PROFILES", "QUERY_ALL_PACKAGES"];
 
     private XDocument GenerateXDoc() 
     {
-        var iconFileName = Path.GetFileNameWithoutExtension(FileStructure.IconFilePath);
+        var iconFileName = Path.GetFileNameWithoutExtension(FileStructure.Icon.OutputFilePath);
 		var ns = XNamespace.Get("http://schemas.android.com/apk/res/android");
         return new XDocument
         (
@@ -138,5 +138,5 @@ public class AndroidManifest(StubFileStructure fileStructure, Package package)
             WriteWarningMessage($"An error occurred when trying to write: {FilePath}");
             WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
         }
-    }    
+    }
 }

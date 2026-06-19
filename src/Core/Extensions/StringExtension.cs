@@ -15,7 +15,7 @@ public static class StringExtension
     }
 
     /// <summary> 
-    ///     An alternative implementation of StringBuilder.AppendLine() that will prepend the number of spaces specified.
+    ///     An alternative implementation of StringBuilder.AppendLine() that will prepend the number of spaces specified. 
     /// </summary> 
     public static StringBuilder AppendLine(this StringBuilder builder, string line, uint spaces = 0) 
     {
@@ -31,12 +31,42 @@ public static class StringExtension
 
 
     /// <summary>
-    ///     Parses a file path for it's file extension.
-    ///     Assigns the file extension to the reference parameter.
-    ///     Returns the IconFileType enum member associated with the extension, or IconFileType.UNSET otherwise.
+    ///     Parses a file path for it's file extension. <br/>
+    ///     Assigns the file extension to the reference parameter. <br/>
+    ///     Returns the IconFileType enum member associated with the extension, or IconFileType.UNSET otherwise. <br/>
     /// </summary>
     public static IconFileType ToIconFileType(this string InputIconPath, ref string? iconFileExt) 
     {   
+        if (string.IsNullOrEmpty(InputIconPath)) {
+            return IconFileType.UNSET;
+        }
+
+        try {
+            iconFileExt = Path.GetExtension(InputIconPath).ToLower();
+        }
+
+        catch (Exception ex) {
+            WriteWarningMessage($"Unable to locate the extension for path: {InputIconPath}");
+            WriteErrorMessage(ex.Message);
+            return IconFileType.UNSET;
+        }
+
+        return iconFileExt switch {
+            ".svg" => IconFileType.SVG,
+            ".webp" => IconFileType.WEBP,
+            ".xml" => IconFileType.XML,
+            _ => IconFileType.UNSET,
+        };
+    }
+
+    /// <summary>
+    ///     Parses a file path for it's file extension. <br/>
+    ///     Returns the IconFileType enum member associated with the extension, or IconFileType.UNSET otherwise. <br/>
+    /// </summary>
+    public static IconFileType ToIconFileType(this string InputIconPath) 
+    {   
+        string? iconFileExt;
+        
         if (string.IsNullOrEmpty(InputIconPath)) {
             return IconFileType.UNSET;
         }
