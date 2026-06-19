@@ -1,14 +1,15 @@
-// ADD METHODS TO WRITE STUB using STUBINFO, 
-
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
-using DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
+using Stub.Contents;
+using static Global.Messaging;
 
 public class Generator 
 {
     public static void GenerateStub(StubInfo stubInfo) 
     {
-        Console.WriteLine(stubInfo.StubStructure.Icon.IconBuffer.Length);
+        #if DEBUG
+            WriteDebugMessage($"IconBuffer Length in bytes: {stubInfo.StubStructure.Icon.IconBuffer.Length}");
+        #endif
 
         AndroidManifest manifest = new(stubInfo.StubStructure, stubInfo.PackageInfo);
         AppIcon.Write(stubInfo);
