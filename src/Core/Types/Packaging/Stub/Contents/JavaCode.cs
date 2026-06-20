@@ -18,6 +18,7 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
 
 using System;
 using System.Collections.Generic;
+using DummyDroidStubGen.Core.Extensions;
 using static Global.Messaging;
 
 
@@ -26,11 +27,15 @@ public record JavaImport(bool Static, string Name);
 
 public class JavaCode
 {
+    /// <summary> A semantic representation of an empty JavaFileContent list. </summary>
+    private static readonly JavaFileContent Empty = new([]);
+
+    /// <summary> A List of JavaFile objects to be called by PopulateSourceFiles and WriteSourceFiles. </summary>
     private static readonly List<JavaFile> JavaFiles =
     [
-        new JavaFile(FileName: "Blacklist.java", Contents: []),
-        new JavaFile(FileName: "MainActivity.java", Contents: []),
-        new JavaFile(FileName: "PackageResult.java", Contents: []),
+        new JavaFile(fileName: "Blacklist.java", content: Empty),
+        new JavaFile(fileName: "MainActivity.java", content: Empty),
+        new JavaFile(fileName: "PackageResult.java", content: Empty),
     ];
 
     /// <summary> 
@@ -38,9 +43,9 @@ public class JavaCode
     ///     The length of the located line number is then compared to length of the current line number. <br/>
     ///     This function returns a string containing X whitespace chars, where X is the difference in these lengths.
     /// </summary> 
-    private static string GetDebugLinePadding(int line, int totalLines) 
+    private static string GetDebugLinePadding(int currentLineNumber, int totalLines) 
     {
-        int lineLength = line.ToString().Length;
+        int lineLength = currentLineNumber.ToString().Length;
 
         int highestDigitCount = totalLines.ToString().Length;
         
@@ -49,6 +54,11 @@ public class JavaCode
         return new(' ', Math.Max(0, spacesNeeded));
     }
 
+    /// <summary> 
+    ///     Attempts to return a JavaFile object from JavaFiles using the provided fileName. <br/>
+    ///     If successful, file will be assigned this resolved JavaFile object, and returns true. <br/>
+    ///     Otherwise, file will be assigned a null value, and false will be returned.
+    /// </summary>
     public static bool TryGetJavaFile(string fileName, out JavaFile? file) 
     {
         file = null;
@@ -63,8 +73,9 @@ public class JavaCode
         return file != null;
     }
 
-    /// <summary> Writes Blacklist.java using the provided package object. </summary>
-    public static void PopulateBlacklist(Package package) 
+
+    /// <summary> Populates the contents of Blacklist.java using the provided package object. </summary>
+    private static void PopulateBlacklist(Package package) 
     {
         if (!TryGetJavaFile("PackageResult.java", out var javaFile) || javaFile == null) {
             Environment.Exit(1);
@@ -185,8 +196,71 @@ public class JavaCode
         javaFile.AddClosingBracket(tabs);
     }
 
-    /// <summary> Writes PackageResult.java using the provided package object. </summary>
-    public static void PopulatePackageResult(Package package) 
+
+    /// <summary> Populates the contents of MainActivity.java using the provided package object. </summary>
+    private static void PopulateMainActivity(Package package) 
+    {
+        if (!TryGetJavaFile("MainActivity.java", out var javaFile) || javaFile == null) {
+            Environment.Exit(1);
+        }
+
+        JavaImport[] imports = [
+            new(Static: false, Name: "import android.app.Activity"), 
+            new(Static: false, Name: "import android.content.ComponentName"), 
+            new(Static: false, Name: "android.os.UserHandle"),
+            new(Static: false, Name: "android.content.pm.LauncherActivityInfo"),
+            new(Static: false, Name: "android.content.pm.LauncherApps"),
+            new(Static: false, Name: "android.os.Bundle"),
+            new(Static: false, Name: "android.os.Handler"),
+            new(Static: false, Name: "android.os.UserHandle"),
+            new(Static: false, Name: "android.os.UserManager"),
+            new(Static: false, Name: "android.widget.LinearLayout"),
+            new(Static: false, Name: "android.widget.TextView"),
+            new(Static: false, Name: "java.util.List"),
+
+            new(Static: true, Name: "android.view.Gravity.CENTER"),
+            new(Static: true, Name: "android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON"),
+            new(Static: true, Name: "android.widget.Toast.makeText"),
+            new(Static: true, Name: "android.widget.Toast.LENGTH_LONG"),
+            new(Static: true, Name: "android.widget.Toast.LENGTH_SHORT")
+        ];
+
+
+        WriteJavaFileHeader(javaFile, package, imports);        
+        javaFile.AddClassName(
+            className: "MainActivity", 
+            extension: new JavaExtension(
+                Required: true, 
+                ClassName: "Activity"
+            )
+        );
+        javaFile.AddOpeningBracket();
+        
+        int tabs = 1;
+
+        javaFile.AddLine($"private final String appName = {package.Label};", tabs);
+        javaFile.AddLine($"private final String packageName = {package.Name};", tabs);
+        javaFile.AddEmptyLine();
+
+        javaFile.AddLine("private PackageResult packageResult = null;", tabs);
+        javaFile.AddEmptyLine();
+
+        
+        WriteMainActivityOnCreate(ref javaFile, ref tabs);
+        WriteMainActivityOnResume(ref javaFile, ref tabs);
+        WriteMainActivityDelay(ref javaFile, ref tabs);
+        WriteMainActivityLocatePackage(ref javaFile, ref tabs);
+        WriteMainActivityOpenPackage(ref javaFile, ref tabs);
+        WriteMainActivityNotices(ref javaFile, ref tabs);
+
+        RunDebugIfActive(javaFile);
+
+
+    }
+
+
+    /// <summary> Populates the contents of PackageResult.java using the provided package object. </summary>
+    private static void PopulatePackageResult(Package package) 
     {
         if (!TryGetJavaFile("PackageResult.java", out var javaFile) || javaFile == null) {
             Environment.Exit(1);
@@ -250,80 +324,33 @@ public class JavaCode
         
     }
     
-    /// <summary> Writes MainActivity.java using the provided package object. </summary>
-    public static void PopulateMainActivity(Package package) 
+
+    /// <summary> Populates the contents of the 3 required Java source files for the generated stub. </summmary>
+    public static void PopulateSourceFiles(Package package) 
     {
-        if (!TryGetJavaFile("MainActivity.java", out var javaFile) || javaFile == null) {
-            Environment.Exit(1);
-        }
-
-        JavaImport[] imports = [
-            new(Static: false, Name: "import android.app.Activity"), 
-            new(Static: false, Name: "import android.content.ComponentName"), 
-            new(Static: false, Name: "android.os.UserHandle"),
-            new(Static: false, Name: "android.content.pm.LauncherActivityInfo"),
-            new(Static: false, Name: "android.content.pm.LauncherApps"),
-            new(Static: false, Name: "android.os.Bundle"),
-            new(Static: false, Name: "android.os.Handler"),
-            new(Static: false, Name: "android.os.UserHandle"),
-            new(Static: false, Name: "android.os.UserManager"),
-            new(Static: false, Name: "android.widget.LinearLayout"),
-            new(Static: false, Name: "android.widget.TextView"),
-            new(Static: false, Name: "java.util.List"),
-
-            new(Static: true, Name: "android.view.Gravity.CENTER"),
-            new(Static: true, Name: "android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON"),
-            new(Static: true, Name: "android.widget.Toast.makeText"),
-            new(Static: true, Name: "android.widget.Toast.LENGTH_LONG"),
-            new(Static: true, Name: "android.widget.Toast.LENGTH_SHORT")
-        ];
-
-
-        WriteJavaFileHeader(javaFile, package, imports);        
-        javaFile.AddClassName(
-            className: "MainActivity", 
-            extension: new JavaExtension(
-                Required: true, 
-                ClassName: "Activity"
-            )
-        );
-        javaFile.AddOpeningBracket();
-        
-        int tabs = 1;
-
-        javaFile.AddLine($"private final String appName = {package.Label};", tabs);
-        javaFile.AddLine($"private final String packageName = {package.Name};", tabs);
-        javaFile.AddEmptyLine();
-
-        javaFile.AddLine("private PackageResult packageResult = null;", tabs);
-        javaFile.AddEmptyLine();
-
-        
-        WriteMainActivityOnCreate(ref javaFile, ref tabs);
-        WriteMainActivityOnResume(ref javaFile, ref tabs);
-        WriteMainActivityDelay(ref javaFile, ref tabs);
-        WriteMainActivityLocatePackage(ref javaFile, ref tabs);
-        WriteMainActivityOpenPackage(ref javaFile, ref tabs);
-        WriteMainActivityNotices(ref javaFile, ref tabs);
-
-        RunDebugIfActive(javaFile);
-
-
+        PopulateBlacklist(package);
+        PopulatePackageResult(package);
+        PopulateMainActivity(package);
     }
-
     
-
+    
     /// <summary> If the application is being run via "dotnet run", the contents of the JavaFile is displayed. </summary>
     private static void RunDebugIfActive(JavaFile javaFile) 
     {
         #if DEBUG    
-            foreach (var pair in javaFile.Contents) {
-                string indent = GetDebugLinePadding(pair.Key, javaFile.Contents.Count);
-                WriteDebugMessage($"Line {indent}{pair.Key}: {pair.Value}");
+            foreach (var line in javaFile.Content.Get()) 
+            {
+                string indent = GetDebugLinePadding(
+                    currentLineNumber: line.Number, 
+                    totalLines: javaFile.Content.Length
+                );
+
+                WriteDebugMessage($"Line {indent}{line.Number}: {line.Content}");
             }
         #endif
     }
     
+
     /// <summary> Writes the GNUv3 license notice, the package name, and the class imports. </summary>
     private static void WriteJavaFileHeader(JavaFile javaFile, Package package, JavaImport[] imports) 
     {
@@ -336,6 +363,7 @@ public class JavaCode
         }
         javaFile.AddEmptyLine();
     }
+
 
     /// <summary> Writes a closing bracket along with two new line chars to javaFile.Contents </summary>
     private static void WriteJavaBlockEnd(ref JavaFile javaFile, ref int tabs) 
@@ -352,7 +380,8 @@ public class JavaCode
         javaFile.AddEmptyLine();
     }
 
-    /// <summary> Handles the creation of "onCreate(Bundle b)" in MainActivity.java </summary>
+
+    /// <summary> Creates the function "onCreate(Bundle b)" in MainActivity.java </summary>
     private static void WriteMainActivityOnCreate(ref JavaFile javaFile, ref int tabs) 
     {
         javaFile.AddLine("@Override", tabs);
@@ -444,7 +473,8 @@ public class JavaCode
         javaFile.AddClosingBracket(tabs);
     }
     
-    /// <summary> Handles the creation of "onResume()" in MainActivity.java </summary>
+    
+    /// <summary> Creates the function "onResume()" in MainActivity.java </summary>
     private static void WriteMainActivityOnResume(ref JavaFile javaFile, ref int tabs) 
     {
         javaFile.AddEmptyLine();
@@ -462,7 +492,8 @@ public class JavaCode
 
     }
     
-    /// <summary> Handles the creation of "DelayCurrentThreadByMilliseconds()" in MainActivity.java </summary>
+
+    /// <summary> Creates the function "DelayCurrentThreadByMilliseconds()" in MainActivity.java </summary>
     private static void WriteMainActivityDelay(ref JavaFile javaFile, ref int tabs) 
     {
         javaFile.AddLine("public void DelayCurrentThreadByMilliseconds(int delay)", tabs);
@@ -508,7 +539,8 @@ public class JavaCode
 
     }
     
-    /// <summary> Handles the creation of "LocatePackage()" in MainActivity.java </summary>
+
+    /// <summary> Creates the function "LocatePackage()" in MainActivity.java </summary>
     private static void WriteMainActivityLocatePackage(ref JavaFile javaFile, ref int tabs) 
     {
         javaFile.AddComment(
@@ -566,7 +598,8 @@ public class JavaCode
         WriteJavaBlockEnd(ref javaFile, ref tabs);
     }
 
-    /// <summary> Handles the creation of "OpenPackage()" in MainActivity.java </summary>
+
+    /// <summary> Creates the function "OpenPackage()" in MainActivity.java </summary>
     private static void WriteMainActivityOpenPackage(ref JavaFile javaFile, ref int tabs) 
     {
         javaFile.AddComment("Attempts to launch the application associated with the stub.", tabs);
@@ -641,6 +674,7 @@ public class JavaCode
         WriteJavaBlockEnd(ref javaFile, ref tabs);
     }
 
+
     /// <summary> Handles the creation of the activity notices in MainActivity.java </summary>
     private static void WriteMainActivityNotices(ref JavaFile javaFile, ref int tabs) 
     {
@@ -691,4 +725,29 @@ public class JavaCode
         // Decreasing tabs 2 -> 1
         WriteJavaBlockEnd(ref javaFile, ref tabs);
     }
+
+
+    /// <summary> Writes the 3 requires Java source files to the specified source directory. </summary>
+    public static void WriteSourceFiles(string JavaSourceDirectory) 
+    {
+        foreach (var javaFile in JavaFiles) 
+        {
+            if (javaFile.Content.Length == 0) {
+                WriteWarningMessage($"Unable to write required java source file:\n\t -> {javaFile.FileName}");
+                WriteErrorMessage("Current file contents is empty.", exit: true, exitCode: 1);
+            }
+
+            var filePath = Path.Combine(JavaSourceDirectory, javaFile.FileName);
+            try {
+                File.WriteAllLines(filePath, javaFile.Content.GetLines());   
+            }
+            catch (Exception ex) 
+            {
+                WriteWarningMessage($"Unable to write required java source file:\n\t -> {javaFile.FileName}");
+                WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+            }
+
+        }
+    }
+    
 }

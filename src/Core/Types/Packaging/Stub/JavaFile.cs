@@ -19,14 +19,29 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 using Contents;
 using static Global.Messaging;
 
-public class JavaFile(string FileName, Dictionary<int, string> Contents)
+
+public record JavaFileLine(int Number, string Content);
+
+public class JavaFileContent(List<JavaFileLine> lines) 
 {
-    public string FileName { get; init; } = FileName;
-    public Dictionary<int, string> Contents { get; init; } = Contents;
+    private readonly List<JavaFileLine> Lines = lines;
+
+    public int Length => Lines.Count;
+    
+    public void Add(JavaFileLine line) => Lines.Add(line);
+
+    public List<JavaFileLine> Get() => Lines;
+
+    public List<string> GetLines() => [.. Lines.Select(line => line.Content)];
+}
+
+public class JavaFile(string fileName, JavaFileContent content)
+{
+    public string FileName { get; init; } = fileName;
+    public JavaFileContent Content { get; init; } = content;
     
     /// <summary>
     ///     If the extension.Required set to true, the class written extends extension.ClassName <br/>
-    ///      
     /// </summary>
     public void AddClassName(string className, JavaExtension? extension = null, string[]? args = null, int tabs = 0) 
     {
@@ -88,14 +103,19 @@ public class JavaFile(string FileName, Dictionary<int, string> Contents)
         // There are 4 spaces in the standard tab.
         string indent = new(' ', tabs * 4);
 
-        var finalIndex = Contents.Count;
+        var lineIndex = Content.Length;
 
-        // If the specified index
-        if (index != null && index > 0 && index < Contents.Count) {
-            finalIndex = (int)index;
+        // Ensuring specified index is greater than zero and less than the total number of lines.
+        if (index != null && index > 0 && index < lineIndex) {
+            lineIndex = (int)index;
         }
 
-        Contents.Add(finalIndex, $"{indent}{line}"); 
+        Content.Add(
+            new JavaFileLine(
+                Number: lineIndex, 
+                Content: $"{indent}{line}"
+            )
+        ); 
     }
 
     public void AddLines(string[] lines, int tabs = 0) 
@@ -123,25 +143,3 @@ public class JavaFile(string FileName, Dictionary<int, string> Contents)
         AddLine($"public {className}({string.Join(", ", args)})", tabs: tabs);
     }
 }
-
-public static class JavaFileExtension 
-{
-    /// <summary> Writes the GNUv3 License Notice at the beginning of the Java source files. </summary>
-    public static void WriteLicenseNotice(this JavaFile file) 
-    {
-        file.AddLine("/*");
-        file.AddLine("*");
-        file.AddLine("* This program is free software: you can redistribute it and/or modify");
-        file.AddLine("* the Free Software Foundation, either version 3 of the License, or");
-        file.AddLine("* (at your option) any later version.");
-        file.AddLine("*");
-        file.AddLine("* This program is distributed in the hope that it will be useful,");
-        file.AddLine("* but WITHOUT ANY WARRANTY; without even the implied warranty of");
-        file.AddLine("* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the");
-        file.AddLine("* GNU General Public License for more details.");
-        file.AddLine("*");
-        file.AddLine("* You should have received a copy of the GNU General Public License");
-        file.AddLine("* along with this program.  If not, see <https://www.gnu.org/licenses/>.");
-        file.AddLine("*/");
-    }
-} 

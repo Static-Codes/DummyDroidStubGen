@@ -5,9 +5,9 @@ using static Global.Messaging;
 
 public static class FileStructureExtension
 {
-    private static void CreateProjectDirectories(ProjectDirectories stubProjectDirectories) 
+    private static void CreateProjectDirectories(ProjectDirectories projectDirectories) 
     {
-        var directoryPairsEnumerable = stubProjectDirectories.AsEnumerable();
+        var directoryPairsEnumerable = projectDirectories.AsEnumerable();
 
         foreach (var directoryPair in directoryPairsEnumerable) 
         {
