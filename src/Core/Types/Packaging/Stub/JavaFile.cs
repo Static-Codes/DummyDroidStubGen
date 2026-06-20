@@ -97,6 +97,20 @@ public class JavaFile(string FileName, Dictionary<int, string> Contents)
 
         Contents.Add(finalIndex, $"{indent}{line}"); 
     }
+
+    public void AddLines(string[] lines, int tabs = 0) 
+    {
+        foreach (var line in lines) {
+            AddLine(line, tabs);
+        }
+    }
+
+    public void AddLines(IEnumerable<string> lines, int tabs = 0) 
+    {
+        foreach (var line in lines) {
+            AddLine(line, tabs);
+        }
+    }
     
     /// <summary> Calls AddLine using "{" </summary>
     public void AddOpeningBracket(int tabs = 0) => AddLine("{", tabs: tabs);

@@ -505,6 +505,7 @@ public class Device
 
         
         if (RetrievalType == PackageRetrievalType.APP_NAME) {
+            // TODO: IMPLEMENT ME
             // Include Resources/Java/lib/*.jar
             // Include Resources/Java/OnDeviceLabelFetcher/*
             // Unzip lib.zip and odlf.zip to $HOME/.config/DummyDroidStubGen/Resources/

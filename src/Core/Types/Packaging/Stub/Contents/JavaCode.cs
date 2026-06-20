@@ -28,9 +28,9 @@ public class JavaCode
 {
     private static readonly List<JavaFile> JavaFiles =
     [
+        new JavaFile(FileName: "Blacklist.java", Contents: []),
         new JavaFile(FileName: "MainActivity.java", Contents: []),
         new JavaFile(FileName: "PackageResult.java", Contents: []),
-        new JavaFile(FileName: "SecurityPolicy.java", Contents: [])  
     ];
 
     /// <summary> 
@@ -63,6 +63,128 @@ public class JavaCode
         return file != null;
     }
 
+    /// <summary> Writes Blacklist.java using the provided package object. </summary>
+    public static void PopulateBlacklist(Package package) 
+    {
+        if (!TryGetJavaFile("PackageResult.java", out var javaFile) || javaFile == null) {
+            Environment.Exit(1);
+        }
+
+        JavaImport[] imports = [
+            new(Static: false, Name: "java.util.Arrays"),
+            new(Static: false, Name: "java.util.HashSet"),
+            new(Static: false, Name: "java.util.Set"),
+        ];
+
+        WriteJavaFileHeader(javaFile, package, imports);
+
+        javaFile.AddClassName(className: "Blacklist");
+        javaFile.AddOpeningBracket();
+
+        int tabs = 1;
+
+        javaFile.AddLine(
+            line: "private static HashSet<String> BLACKLIST = new HashSet<>(", 
+            tabs
+        );
+
+        // Increasing tabs 1 -> 2
+        tabs++;
+        javaFile.AddLine(line: "Arrays.asList(", tabs);
+
+        // Increasing tabs 2 -> 3
+        tabs++;
+
+        // javaFile.AddLines([
+        //     "com.coinbase.android",
+        //     "com.binance.dev",
+        //     "com.kraken.invest",
+        //     "com.crypto.exchange",
+        //     "com.gemini.android",
+        //     "com.robinhood.android",
+        //     "com.wallet.crypto.trustapp",
+        //     "io.metamask",
+        //     "com.coinmarketcap.android",
+        //     "com.coingecko.coingeckoapp",
+        //     "com.etoro.openbook",
+        //     "com.squareup.cash",
+        //     "com.bybit.app",
+        //     "com.okinc.okex.gp",
+        //     "com.ledger.live",
+        //     "com.tradingview.tradingviewapp",
+        //     "com.kucoin.KuCoin",
+        //     "com.gateio.gateio",
+        //     "com.pionex.pionex",
+        //     "com.wetrader.ui",
+        //     "net.bitstamp.android",
+        //     "com.uphold.wallet",
+        //     "com.sofi.android",
+        //     "com.paypal.android.p2pmobile",
+        //     "com.venmo",
+        //     "com.blockchain.wc.android",
+        //     "com.exodusmovement.exodus",
+        //     "com.breadwallet.app",
+        //     "com.defi.wallet",
+        //     "org.toshi",
+        //     "app.phantom",
+        //     "io.safepal.wallet",
+        //     "com.tokenpocket",
+        //     "com.bitpay.wallet",
+        //     "network.celsius.wallet",
+        //     "com.investvoyager",
+        //     "com.zengo.wallet",
+        //     "com.blockfi.blockfi",
+        //     "com.cryptohopper.mobile",
+        //     "com.coinstats.crypto"
+        // ], tabs);
+        
+        var blacklistedPackages = Package.GetBlacklistedPackages();
+
+        // TODO: UPDATE blacklist.json to include the packages above.
+        // This is infinitely more efficient than using a hardcoded blacklist on the stub generator, or the stub itself.
+        javaFile.AddLines(lines: blacklistedPackages.Select(bp => $"\"{bp.Name}\","), tabs);
+
+        // Decreasing tabs 3 -> 2
+        tabs--;
+        javaFile.AddLine(line: ")", tabs);
+
+        // Decreasing tabs 2 -> 1
+        tabs--;
+        javaFile.AddLine(line: ");", tabs);
+        javaFile.AddEmptyLine();
+        javaFile.AddEmptyLine();
+
+        // javaFile.AddLine("private static final Set<String> BLACKLIST = new HashSet<>(cryptoPackageNames);", tabs);
+        javaFile.AddEmptyLine();
+        javaFile.AddLine("public static boolean isBlacklisted(String packageName)", tabs);
+        javaFile.AddOpeningBracket(tabs);
+
+        // Increasing tabs 1 -> 2
+        tabs++;
+        javaFile.AddLine("if (packageName == null) { return true; }", tabs);
+        javaFile.AddEmptyLine();
+        javaFile.AddLine("packageName = packageName.toLowerCase();", tabs);
+        javaFile.AddEmptyLine();
+
+        javaFile.AddComment("Inclusive block on sensitive package names.", tabs);
+        javaFile.AddLine(
+            line: "String[] genericKeywords = { \"bank\", \"crypto\", \"installer\", \"security\", \"wallet\"};",
+            tabs
+        );
+        javaFile.AddLine(
+            line: "boolean blacklistedPackageFound = Arrays.stream(genericKeywords).anyMatch(packageName::contains);",
+            tabs
+        );
+        javaFile.AddEmptyLine();
+        javaFile.AddLine("return blacklistedPackageFound ? false : BLACKLIST.contains(packageName);", tabs);
+
+        tabs--;
+        javaFile.AddClosingBracket(tabs);
+        
+        tabs--;
+        javaFile.AddClosingBracket(tabs);
+    }
+
     /// <summary> Writes PackageResult.java using the provided package object. </summary>
     public static void PopulatePackageResult(Package package) 
     {
@@ -83,7 +205,7 @@ public class JavaCode
         javaFile.AddOpeningBracket();
         
         javaFile.AddComment("If the package was located in any of the device's profiles.", tabs: 1);
-        javaFile.AddLine("public Boolean PackageFound = false;", tabs: 1);
+        javaFile.AddLine("public boolean PackageFound = false;", tabs: 1);
         javaFile.AddEmptyLine();
 
         javaFile.AddComment("A UserHandle where the associated package is installed.", tabs: 1);
@@ -103,12 +225,12 @@ public class JavaCode
         javaFile.AddLine("public LauncherApps AppsVisibleToStub = null;", tabs: 1);
         javaFile.AddEmptyLine();
 
-        // public PackageResult(Boolean packageFound, UserHandle profile, ComponentName mainActivityName, LauncherApps appsVisibleToStub)
+        // public PackageResult(boolean packageFound, UserHandle profile, ComponentName mainActivityName, LauncherApps appsVisibleToStub)
         javaFile.AddSecondaryConstructor
         (
             className: "PackageResult",
             args: [
-                "Boolean packageFound", 
+                "boolean packageFound", 
                 "UserHandle profile", 
                 "ComponentName mainActivityName", 
                 "LauncherApps appsVisibleToStub"
@@ -189,6 +311,7 @@ public class JavaCode
 
     }
 
+    
 
     /// <summary> If the application is being run via "dotnet run", the contents of the JavaFile is displayed. </summary>
     private static void RunDebugIfActive(JavaFile javaFile) 

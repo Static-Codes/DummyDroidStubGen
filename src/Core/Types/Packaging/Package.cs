@@ -51,14 +51,13 @@ public class Package(string name, PackageCategory category, string? label = null
     /// <summary>
     ///     Returns a List of blacklisted packages that will be used in GetWhitelistedPackages().
     /// </summary>
-    private static List<Package> GetBlacklistedPackages() 
-    {
+    public static List<Package> GetBlacklistedPackages() {
         return ParseEmbeddedResourceToPackageList(BlacklistHelper.ResourcePath);
     }
 
-    public static List<Package> GetWhitelistedPackages(Dictionary<PackageCategory, List<string>> packageCategoryGroups) 
+    public static List<Package> GetWhitelistedPackages(List<Package> packages) 
     {
-        if (packageCategoryGroups == null || packageCategoryGroups.Count == 0) 
+        if (packages == null || packages.Count == 0) 
         {
             WriteWarningMessage("No eligible packages were located while trying to generate a stub.");
             WriteErrorMessage("packageCategoryGroups is null or empty in Package.GetWhitelistedPackages()");
@@ -69,14 +68,9 @@ public class Package(string name, PackageCategory category, string? label = null
 
         // Excluding Blacklisted and system packages.
         // Mapping package names to Package objects.
-        return [.. packageCategoryGroups
-            .Where(pair => pair.Key != PackageCategory.System)
-            .Where(pair => pair.Value.Any(name => !blacklistedPackages.Any(a => a.Name.Contains(name))))
-            .SelectMany(pair => pair.Value.Select(
-                packageName =>  {
-                    return new Package(name: packageName, category: pair.Key);
-                }
-            ))
+        return [.. packages
+            .Where(package => !blacklistedPackages.Any(bp => bp.Name.Equals(package.Name)))
+            .Where(package => !blacklistedPackages.Any(bp => bp.Label.Equals(package.Label)))
         ];
     }
     

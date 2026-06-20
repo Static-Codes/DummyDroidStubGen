@@ -29,7 +29,9 @@ public static class BlacklistHelper
     // - Core System Utilities (Which can cause general instability at best and compromises at worst.)
     // - Common Commercial Targets (Such as banking apps, crypto wallets, etc)
     // - Private messaging apps, such as Signal, Simplex, Telegram 
-    public static readonly string ResourcePath = $"{ApplicationName}.Resources.Security.blacklist.json";
+    // public static readonly string ResourcePath = $"{ApplicationName}.Resources.Security.blacklist.json";
+
+    public static readonly string ResourcePath = "Resources.Security.blacklist.json";
     public static bool IsBlacklisted(this List<Package> blacklistedPackages, string packageName) 
     {
         // Checking if a wildcard indicator is present.
