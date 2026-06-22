@@ -37,12 +37,12 @@ public class ShellFileContent(List<ShellFileLine> lines)
 }
 
 /// <summary> Contains the functionality to generate a .sh file. </summary>
-public class ShellFile(string FileName, Dictionary<int, string> Contents)
+public class ShellFile(string FileName, ShellFileContent Contents)
 {
     public string FileName { get; init; } = FileName;
 
     /// <summary>
-    public Dictionary<int, string> Contents { get; init; } = Contents; 
+    public ShellFileContent Contents { get; init; } = Contents; 
 
     /// <summary> Calls AddLine using "}" </summary>
     public void AddClosingBracket(int tabs = 0) => AddLine("}", tabs);
@@ -84,14 +84,19 @@ public class ShellFile(string FileName, Dictionary<int, string> Contents)
         // There are 4 spaces in the standard tab.
         string indent = new(' ', tabs * 4);
 
-        var finalIndex = Contents.Count;
+        var finalIndex = Contents.Length;
 
         // If the specified index
-        if (index != null && index > 0 && index < Contents.Count) {
+        if (index != null && index > 0 && index < Contents.Length) {
             finalIndex = (int)index;
         }
 
-        Contents.Add(finalIndex, $"{indent}{line}"); 
+        Contents.Add(
+            new ShellFileLine(
+                Number: finalIndex, 
+                Content: $"{indent}{line}"
+            )
+        ); 
     }
 
 

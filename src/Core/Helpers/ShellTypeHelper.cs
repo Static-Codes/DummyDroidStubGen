@@ -17,6 +17,7 @@
 namespace DummyDroidStubGen.Core.Helpers;
 
 using Extensions;
+using Types;
 using static Global.Constants;
 using static Global.Messaging;
 using static Helpers.IO.InputHelper;
