@@ -45,6 +45,19 @@ public static class FileHelper
     public static readonly string LibrariesSubDirectory = Path.Combine(ResourcesSubDirectory, "libs");
 
     /// <summary>
+    ///     The path to the Android SDK that will be written to disk during the compilation process. <br/>
+    ///     This JAR will then be called by aapt2 link during the execution of build.sh
+    /// </summary> 
+    public static readonly string AndroidSDKJarPath = Path.Combine(LibrariesSubDirectory, "android-21.jar");
+
+
+    /// <summary>
+    ///     The path to the Android R8 Java runtime that will be written to disk during the compilation process. <br/>
+    ///     This JAR will then be converted to Android Dex code and will be aligned within the APK in following commands.
+    /// </summary> 
+    public static readonly string AndroidR8JarPath = Path.Combine(LibrariesSubDirectory, "r8lib.jar");
+
+    /// <summary>
     ///     The path to inside ResourcesSubDirectory where DDSG will extract the optional OnDeviceLabelFetcher.
     /// </summary>
     public static readonly string ODLFSubDirectory = Path.Combine(ResourcesSubDirectory, "OnDeviceLabelFetcher");

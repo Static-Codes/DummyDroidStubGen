@@ -49,6 +49,9 @@ public class AndroidManifest(FileStructure fileStructure, Package package)
     /// <summary> The required permissions the compiled stub requires to function as intended. </summary>
     private readonly string[] Permissions = ["INTERACT_ACROSS_PROFILES", "QUERY_ALL_PACKAGES"];
 
+    /// <summary> The path of the AndroidManifest.xml file relative to the main build script (build.sh). </summary>
+    public const string RelativeManifestPath = "src/main/AndroidManifest.xml";
+
     /// <summary> Generates an XDocument object containing the contents of the stub's AndroidManifest.xml </summary>
     private XDocument GenerateXDoc() 
     {

@@ -16,6 +16,10 @@
 */
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
+using System.Text;
+using static Global.Messaging;
+using static Types.Packaging.Stub.Contents.ShellCode;
+
 // <summary> Represents a command that will be called within a shell function. </summary>
 public record ShellFunctionCommand(string Line, int TabCount);
 
@@ -37,12 +41,12 @@ public class ShellFileContent(List<ShellFileLine> lines)
 }
 
 /// <summary> Contains the functionality to generate a .sh file. </summary>
-public class ShellFile(string FileName, ShellFileContent Contents)
+public class ShellFile(string FileName, ShellFileContent Content)
 {
     public string FileName { get; init; } = FileName;
 
     /// <summary>
-    public ShellFileContent Contents { get; init; } = Contents; 
+    public ShellFileContent Content { get; init; } = Content; 
 
     /// <summary> Calls AddLine using "}" </summary>
     public void AddClosingBracket(int tabs = 0) => AddLine("}", tabs);
@@ -52,7 +56,7 @@ public class ShellFile(string FileName, ShellFileContent Contents)
     public void AddComment(string comment, int tabs = 0) => AddLine($"# {comment}", tabs);
 
 
-    /// <summary> Appends a KeyValuePair containing a new line char to the existing Dictionary. </summary>
+    /// <summary> Appends a ShellFileLine containing a new line char to the existing Dictionary. </summary>
     public void AddEmptyLine() => AddLine("");
 
 
@@ -76,27 +80,102 @@ public class ShellFile(string FileName, ShellFileContent Contents)
     }
     
     /// <summary> 
-    ///     Creates a KeyValuePair to be inserted in JavaFile.Contents. <br/>
-    ///     Inserts the KeyValuePair at the end of the Dictionary, or at index (if specified).
+    ///     Creates a ShellFileLine to be inserted in ShellFile.Contents. <br/>
+    ///     Inserts the ShellFileLine at the end of the Dictionary, or at index (if specified).
     /// </summary>
     public void AddLine(string line, int tabs = 0, int? index = null) 
     {
         // There are 4 spaces in the standard tab.
         string indent = new(' ', tabs * 4);
 
-        var finalIndex = Contents.Length;
+        var finalIndex = Content.Length;
 
         // If the specified index
-        if (index != null && index > 0 && index < Contents.Length) {
+        if (index != null && index > 0 && index < Content.Length) {
             finalIndex = (int)index;
         }
 
-        Contents.Add(
+        Content.Add(
             new ShellFileLine(
                 Number: finalIndex, 
                 Content: $"{indent}{line}"
             )
         ); 
+    }
+
+
+    /// <summary> Represents a shell argument's name and the associated value. </summary>
+    public record UsageArgument(string Name, string Value);
+
+    /// <summary> Inserts an invalid usage block using the specified UsageArgument(s). </summary>
+
+    public void AddInvalidUsageBlock(UsageArgument[] arguments, ref int tabs) 
+    {
+        if (arguments.Length == 0) {
+            WriteWarningMessage("arguments is null in AddInvalidUsageBlock");
+            return;
+        }
+
+        // Escaping the argument names to prevent incorrect insertion.
+        var sanitizedNames = arguments.Select(arg => $"\\\"{arg.Name}\\\"");
+
+        // Escaping the argument values to prevent incorrect insertion.
+        var sanitizedValues = arguments.Select(arg => $"\\\"{arg.Value}\\\"");
+
+        var numberLineBuilder = new StringBuilder();
+
+        if (arguments.Length == 1) {
+            numberLineBuilder.AppendLine("if [ -z \\\"$1\\\" ]; then");
+        }
+
+        else 
+        {
+            var sanitizedNumbers = new string[arguments.Length];
+
+            for (int i = 0; i < arguments.Length; i++ )
+            {
+                sanitizedNumbers[i] = $"\\\"${i+1}\\\"";
+
+                if (i == 0) {
+                    numberLineBuilder.Append($"if [ -z {sanitizedNumbers[i]} ] || ");
+                    continue;
+                }
+
+                else if (i == arguments.Length - 1) {
+                    numberLineBuilder.Append($"[ -z {sanitizedNumbers[i]} ]; then");
+                }
+
+                else {
+                    numberLineBuilder.Append($"[ -z {sanitizedNumbers[i]} ] || ");
+                }
+
+            }
+        }
+
+        AddLine(numberLineBuilder.ToString(), tabs);
+
+        // Increasing tabs 0 -> 1
+        tabs++;
+
+        AddLine("echo \"Invalid usage.\"", tabs);
+        
+        AddLine(
+            line: $"echo \"Expected: ./{BuildFileName} {string.Join(' ', sanitizedNames)}\"", 
+            tabs
+        );
+
+        AddLine(
+            line: $"echo \"Example: ./{BuildFileName} {string.Join(' ', sanitizedValues)}\"", 
+            tabs
+        );
+
+        AddLine("exit 1", tabs);
+
+        // Decreasing the reference value tabs 1 -> 0
+        tabs--;
+
+        AddLine("fi", tabs);
+        AddEmptyLine(); 
     }
 
 
