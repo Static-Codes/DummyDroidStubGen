@@ -20,11 +20,21 @@ using System.Text;
 using static Global.Messaging;
 using static Types.Packaging.Stub.Contents.ShellCode;
 
+/// <summary> Represents an argument passed to ShellFile.AddCommand() </summary>
+public record ShellCommandArgument(string Flag, string? Value, bool Assigns = false)
+{
+    public string Render() => (Assigns, Value) switch
+    {
+        (true, null)         => throw new InvalidOperationException(
+                                                $"'{Flag}': Assigns is true, but Value is null."),
+        (false, null)        => Flag,
+        (false, var value)   => $"{Flag} {value}",
+        (true, var value)    => $"{Flag}={value}",
+    };
+}
+
 // <summary> Represents a command that will be called within a shell function. </summary>
 public record ShellFunctionCommand(string Line, int TabCount);
-
-/// <summary> Represents an argument passed to ShellFile.AddCommand() </summary>
-public record ShellCommandArgument(string Flag, string? Value, bool Assigns = false);
 
 /// <summary> Represents the contents of a single line within a ShellFileContent object. </summary>
 public record ShellFileLine(int Number, string Content);
@@ -43,6 +53,7 @@ public class ShellFileContent(List<ShellFileLine> lines)
     public List<string> GetLines() => [.. Lines.Select(line => line.Content)];
 }
 
+
 /// <summary> Contains the functionality to generate a .sh file. </summary>
 public class ShellFile(string FileName, ShellFileContent Content)
 {
@@ -58,42 +69,17 @@ public class ShellFile(string FileName, ShellFileContent Content)
     /// <summary> Calls AddLine using $"# {comment}" </summary>
     public void AddComment(string comment, int tabs = 0) => AddLine($"# {comment}", tabs);
 
-    public void AddCommand(string command, ShellCommandArgument[]? arguments, int tabs = 0) 
+    public void AddCommand(string command, ShellCommandArgument[]? arguments, int tabs = 0)
     {
         if (string.IsNullOrWhiteSpace(command)) {
             throw new ArgumentException(
-                message: "Invalid call to AddCommand: Parameter command cannot be null or empty.", 
+                message: "command cannot be null or empty.", 
                 paramName: nameof(command)
             );
         }
-
-        arguments ??= [];
-        var builder = new StringBuilder().Append(command);
-
-        foreach (var argument in arguments) 
-        {
-            // Adding a space between any arguments.
-            builder.Append(' ');
-
-            _ = (argument.Assigns, argument.Value) switch
-            {
-                (true, null) => throw new ArgumentException(
-                    message: $"Invalid call to AddCommand using '{argument.Flag}': Assigns is true, but Value is null.", 
-                    paramName: nameof(arguments)
-                ),
-                
-                // If the command is a flag only (ie, "--someflag")
-                (false, null) => builder.Append(argument.Flag),
-                
-                // If the command is a flag without an assignment operator (ie, "--output myfile.txt")
-                (false, string value) => builder.Append(argument.Flag).Append(' ').Append(value),
-                
-                // If the command is a flag with an assignment operator (ie, "output=myfile.txt")
-                (true, string value) => builder.Append(argument.Flag).Append('=').Append(value)
-            };
-        }
-
-        AddLine(builder.ToString(), tabs);
+        
+        var parts = (arguments ?? []).Select(arg => arg.Render());
+        AddLine(string.Join(' ', [command, ..parts]), tabs);
     }
 
     /// <summary> Appends a ShellFileLine containing a new line char to the existing Dictionary. </summary>
