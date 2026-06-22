@@ -19,8 +19,13 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
 using static DefaultDrawables;
 using static Global.Messaging;
 using static Helpers.IO.FileHelper;
+
+/// <summary> Represents the generated stub's icon. </summary>
 public class AppIcon 
 {
+    /// <summary> 
+    ///     A runtime safe method that returns true if the StubIcon's Buffer was written to disk, otherwise false. 
+    /// </summary>
     private static bool TryWriteIcon(StubInfo stubInfo) 
     {   
         if (stubInfo.StubStructure.Icon.IconBuffer.Length == 0) 
@@ -53,7 +58,7 @@ public class AppIcon
         return true;
     }
 
-
+    /// <summary> Returns true if provided StubIcon Buffer's contents were written to disk, otherwise false. </summary>
     public static bool Write(StubInfo stubInfo)
     {
         if (TryWriteIcon(stubInfo)) {

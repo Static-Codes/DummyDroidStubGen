@@ -21,6 +21,7 @@ using static Global.Messaging;
 using static Stub.Contents.JavaCode;
 using static Stub.Contents.ProjectFileCode;
 
+/// <summary> Contains the publicly exposed method to generate the current stub </summary>
 public class Generator 
 {
     public static void GenerateStub(StubInfo stubInfo) 

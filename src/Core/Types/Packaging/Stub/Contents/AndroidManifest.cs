@@ -24,14 +24,32 @@ using static Global.Messaging;
 
 public class AndroidManifest(FileStructure fileStructure, Package package) 
 {   
+    /// <summary> The stub's file structure. This will be accessed by GenerateXDoc() internally. </summary>
     private readonly FileStructure FileStructure = fileStructure;
+
+    /// <summary> The Package object associated with the stub's. This will be accessed by GenerateXDoc() internally. </summary>
     private readonly Package Package = package;
+    
+    /// <summary> The path the AndroidManifest.xml file will be written to. </summary>
     public string FilePath = fileStructure.ManifestFilePath;
+
+    /// <summary> The minimum supported Android SDK version for the compiled stub. </summary>
     public const int MINIMUM_SDK_VERSION = 21;
+
+    /// <summary> The most recent Android SDK version the stub has been verified to work with. </summary> 
     public const int TARGET_SDK_VERSION = 36;
+    
+    /// <summary> 
+    ///     The minimum supported Android version for the compiled stub. <br/> 
+    ///     
+    ///     As of 06/21/2026, this is Android 5.0 (Lollipop)
+    /// </summary>
     public const AndroidOSVersion MINIMUM_OS_VERSION = (AndroidOSVersion)MINIMUM_SDK_VERSION;
+
+    /// <summary> The required permissions the compiled stub requires to function as intended. </summary>
     private readonly string[] Permissions = ["INTERACT_ACROSS_PROFILES", "QUERY_ALL_PACKAGES"];
 
+    /// <summary> Generates an XDocument object containing the contents of the stub's AndroidManifest.xml </summary>
     private XDocument GenerateXDoc() 
     {
         var iconFileName = Path.GetFileNameWithoutExtension(FileStructure.Icon.OutputFilePath);
@@ -120,6 +138,10 @@ public class AndroidManifest(FileStructure fileStructure, Package package)
 		); 
     }
 
+    /// <summary> 
+    ///     A runtime safe method that will write the AndroidManifest.xml file to disk. <br/>
+    ///     This function will hault the application's execution if an exception is thrown.
+    /// </summary>
     public void Write() 
     {
 		XDocument doc = GenerateXDoc();

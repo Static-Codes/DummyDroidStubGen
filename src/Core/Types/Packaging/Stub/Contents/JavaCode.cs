@@ -25,6 +25,7 @@ using static Global.Messaging;
 public record JavaExtension(bool Required, string ClassName);
 public record JavaImport(bool Static, string Name);
 
+/// <summary> Contains the functions and members used to generate the stub's Java source files. </summary>
 public class JavaCode
 {
     /// <summary> A semantic representation of an empty JavaFileContent list. </summary>
@@ -106,52 +107,8 @@ public class JavaCode
         // Increasing tabs 2 -> 3
         tabs++;
 
-        // javaFile.AddLines([
-        //     "com.coinbase.android",
-        //     "com.binance.dev",
-        //     "com.kraken.invest",
-        //     "com.crypto.exchange",
-        //     "com.gemini.android",
-        //     "com.robinhood.android",
-        //     "com.wallet.crypto.trustapp",
-        //     "io.metamask",
-        //     "com.coinmarketcap.android",
-        //     "com.coingecko.coingeckoapp",
-        //     "com.etoro.openbook",
-        //     "com.squareup.cash",
-        //     "com.bybit.app",
-        //     "com.okinc.okex.gp",
-        //     "com.ledger.live",
-        //     "com.tradingview.tradingviewapp",
-        //     "com.kucoin.KuCoin",
-        //     "com.gateio.gateio",
-        //     "com.pionex.pionex",
-        //     "com.wetrader.ui",
-        //     "net.bitstamp.android",
-        //     "com.uphold.wallet",
-        //     "com.sofi.android",
-        //     "com.paypal.android.p2pmobile",
-        //     "com.venmo",
-        //     "com.blockchain.wc.android",
-        //     "com.exodusmovement.exodus",
-        //     "com.breadwallet.app",
-        //     "com.defi.wallet",
-        //     "org.toshi",
-        //     "app.phantom",
-        //     "io.safepal.wallet",
-        //     "com.tokenpocket",
-        //     "com.bitpay.wallet",
-        //     "network.celsius.wallet",
-        //     "com.investvoyager",
-        //     "com.zengo.wallet",
-        //     "com.blockfi.blockfi",
-        //     "com.cryptohopper.mobile",
-        //     "com.coinstats.crypto"
-        // ], tabs);
-        
         var blacklistedPackages = Package.GetBlacklistedPackages();
 
-        // TODO: UPDATE blacklist.json to include the packages above.
         // This is infinitely more efficient than using a hardcoded blacklist on the stub generator, or the stub itself.
         javaFile.AddLines(lines: blacklistedPackages.Select(bp => $"\"{bp.Name}\","), tabs);
 

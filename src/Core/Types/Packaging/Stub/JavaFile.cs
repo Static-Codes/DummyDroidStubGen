@@ -19,9 +19,10 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 using Contents;
 using static Global.Messaging;
 
-
+/// <summary> Represents the contents of a single line within a JavaFileContent object. </summary>
 public record JavaFileLine(int Number, string Content);
 
+/// <summary> Represents the file contents of the associated JavaFile object. </summary>
 public class JavaFileContent(List<JavaFileLine> lines) 
 {
     private readonly List<JavaFileLine> Lines = lines;
@@ -35,6 +36,7 @@ public class JavaFileContent(List<JavaFileLine> lines)
     public List<string> GetLines() => [.. Lines.Select(line => line.Content)];
 }
 
+/// <summary> Contains the functionality to generate a .java file. </summary>
 public class JavaFile(string fileName, JavaFileContent content)
 {
     public string FileName { get; init; } = fileName;

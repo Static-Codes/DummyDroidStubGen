@@ -17,8 +17,6 @@
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
 using DummyDroidStubGen.Core.Extensions;
-using static Core.Helpers.IO.FileHelper;
-using static Global.Messaging;
 
 public enum IconFileType { UNSET = 0, XML = 1, WEBP = 2, SVG = 3 }
 public class Icon
@@ -48,31 +46,3 @@ public class Icon
     }
 }
 
-public static class StubIconInfoExtension 
-{
-    public static void SetBuffer(this Icon iconInfo) 
-    {
-        // If the inputFilePath passed as a parameter is valid, the function ends here.
-        if (TrySerializePathToByteArray(iconInfo.InputFilePath, out iconInfo.IconBuffer)) {
-            return;
-        }
-        
-        WriteWarningMessage("Unable to serialize the provided icon content stream.");
-        WriteInformation("Choosing a predefined vector for your icon...");
-        var choice = DefaultDrawables.GetPsuedoRandomChoice();
-
-        // A safe check on whether or not the embedded resource can be resolved.
-        if (!TryGetManifestResourceStream(choice.ResourcePath, out var stream)) 
-        {
-            WriteWarningMessage("Unable to retrieve the predefined vector's content stream.");
-            Environment.Exit(1);
-        }
-
-        // Assigns the predefined vector's contents to IconBuffer (if successful), otherwise exits.
-        if (!TrySerializeStreamToByteArray(stream!, out iconInfo.IconBuffer)) 
-        {
-            WriteWarningMessage("Unable to serialize the predefined Vector's content stream.");
-            Environment.Exit(1);
-        }
-    }
-}

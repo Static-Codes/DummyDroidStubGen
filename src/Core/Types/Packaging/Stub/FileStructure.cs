@@ -35,7 +35,7 @@ public class FileStructure
         throw new NotImplementedException("Please implement me before committing.");
     }
 
-    
+    /// <summary> Creates a new instance of FileStructure for the current stub. </summary>
     public static FileStructure New(string ProjectDirectory, string PackageName, string InputIconPath) 
     {
         if (!Directory.Exists(ProjectDirectory)) {
@@ -63,6 +63,10 @@ public class FileStructure
         ///// A nullable string that will either be null or contain the path to the converted file.
         ///// </summary>
         
+        # if DEBUG
+            WriteWarningMessage("Please implement SVG to Android Drawable Conversion in FileStructure.cs");
+        #endif
+        
         if (iconFileType == IconFileType.UNSET) {
             WriteWarningMessage("Unable to create the internal directory structure for the stub.");
             WriteErrorMessage(
@@ -74,6 +78,7 @@ public class FileStructure
 
         // TODO: Implement SVG to xml conversion.
         else if (iconFileType == IconFileType.SVG) {
+            
             throw new NotImplementedException("Please implement me before committing");
         }
 
