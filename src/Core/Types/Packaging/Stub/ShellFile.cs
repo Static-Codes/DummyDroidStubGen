@@ -21,7 +21,7 @@ using static Global.Messaging;
 using static Types.Packaging.Stub.Contents.ShellCode;
 
 /// <summary> Represents an argument passed to ShellFile.AddCommand() </summary>
-public record ShellCommandArgument(string Flag, string? Value, bool Assigns = false)
+public record ShellCommandArgument(string Flag, string? Value = null, bool Assigns = false)
 {
     public string Render() => (Assigns, Value) switch
     {
@@ -69,6 +69,8 @@ public class ShellFile(string FileName, ShellFileContent Content)
     /// <summary> Calls AddLine using $"# {comment}" </summary>
     public void AddComment(string comment, int tabs = 0) => AddLine($"# {comment}", tabs);
 
+
+    /// <summary> Calls AddLine using "string.Join(' ', [command, ..parts])" </summary>
     public void AddCommand(string command, ShellCommandArgument[]? arguments, int tabs = 0)
     {
         if (string.IsNullOrWhiteSpace(command)) {
@@ -82,8 +84,24 @@ public class ShellFile(string FileName, ShellFileContent Content)
         AddLine(string.Join(' ', [command, ..parts]), tabs);
     }
 
+
+    public void AddEchoCommand(string text, bool escaped = true, int tabs = 0) 
+    {
+        AddCommand("echo", [
+            escaped switch {
+                true => new ShellCommandArgument(Flag: "-e", Value: $"\"{text}\""),
+                false => new ShellCommandArgument(Flag: $"\"{text}\"")
+            }
+        ], tabs);
+    }
+
     /// <summary> Appends a ShellFileLine containing a new line char to the existing Dictionary. </summary>
     public void AddEmptyLine() => AddLine("");
+    
+    /// <summary> Calls AddEmptyLine n times. </summary>
+    public void AddEmptyLines(int n) { while (n--> 0) AddEmptyLine(); }
+
+    public void AddExitCommand(int status, int tabs) => AddLine($"exit {status}", tabs);
 
     /// <summary> Appends a shell function using the functionName and commands provided. </summary>
     public void AddFunction(string functionName, ShellFunctionCommand[] commands, bool foldCommands = false) 
@@ -178,7 +196,6 @@ public class ShellFile(string FileName, ShellFileContent Content)
         AddEmptyLine(); 
     }
 
-
     /// <summary> 
     ///     Creates a ShellFileLine to be inserted in ShellFile.Contents. <br/>
     ///     Inserts the ShellFileLine at the end of the Dictionary, or at index (if specified).
@@ -221,6 +238,16 @@ public class ShellFile(string FileName, ShellFileContent Content)
         }
     }
 
+
+    public void AddMkdirCommand(string[] directories, bool createParents = true)
+    {
+        AddCommand("mkdir", [
+            createParents switch {
+                true => new ShellCommandArgument(Flag: "-p", Value: $"\"{string.Join(' ', directories)}\""),
+                false => new ShellCommandArgument(Flag: $"\"{string.Join(' ', directories)}\"")
+            }
+        ]);
+    }
 
     /// <summary> Calls AddLine using "{" </summary>
     public void AddOpeningBracket(int tabs = 0) => AddLine("{", tabs: tabs);
