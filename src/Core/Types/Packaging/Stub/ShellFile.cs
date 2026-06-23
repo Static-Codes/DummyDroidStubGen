@@ -56,10 +56,11 @@ public class ShellFileContent(List<ShellFileLine> lines)
 
 /// <summary> Contains the functionality to generate a .sh file. </summary>
 public class ShellFile(string FileName, ShellFileContent Content)
-{
+{   
+    /// <summary> The filename associated with the current ShellFile object. </summary>
     public string FileName { get; init; } = FileName;
 
-    /// <summary>
+    /// <summary> The content of the current shell file. </summary>
     public ShellFileContent Content { get; init; } = Content; 
 
     /// <summary> Calls AddLine using "}" </summary>
@@ -85,6 +86,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
     }
 
 
+    /// <summary> Calls AddLine to create a "echo" command. </summary>
     public void AddEchoCommand(string text, bool escaped = true, int tabs = 0) 
     {
         AddCommand("echo", [
@@ -101,6 +103,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
     /// <summary> Calls AddEmptyLine n times. </summary>
     public void AddEmptyLines(int n) { while (n--> 0) AddEmptyLine(); }
 
+    /// <summary> Calls AddLine($"exit {status}", tabs) </summary>
     public void AddExitCommand(int status, int tabs) => AddLine($"exit {status}", tabs);
 
     /// <summary> Appends a shell function using the functionName and commands provided. </summary>
@@ -238,7 +241,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
         }
     }
 
-
+    /// <summary> Calls AddLine to create a "mkdir" command. </summary>
     public void AddMkdirCommand(string[] directories, bool createParents = true)
     {
         AddCommand("mkdir", [
@@ -253,6 +256,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
     public void AddOpeningBracket(int tabs = 0) => AddLine("{", tabs: tabs);
 
 
+    /// <summary> Declares and initializes a variable, with or without a comment. </summary>
     public void AddVariableDeclaration(string variableName, string value, string? comment = null, int tabs = 0) 
     {
         var builder = new StringBuilder().Append($"{variableName}=\"{value}\"");
