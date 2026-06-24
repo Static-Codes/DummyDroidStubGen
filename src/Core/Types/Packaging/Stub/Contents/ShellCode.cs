@@ -136,7 +136,9 @@ public class ShellCode
         return file != null;
     }
 
-    public static void WriteBuildScriptAlignmentBlock(ShellFile shellFile, ref int tabs) 
+
+    /// <summary> Writes the APK alignment block to the provided shellFile. </summary>
+    private static void WriteBuildScriptAlignmentBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user of the alignment process that is about to occur and documenting the different flags used.
         shellFile.AddEchoCommand("\\n[8/16] -> Aligning APK...\\n");
@@ -166,7 +168,9 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptConfirmationBlock(ShellFile shellFile, ref int tabs) 
+
+    /// <summary> Writes the APK alignment confirmation block to the provided shellFile. </summary>
+    private static void WriteBuildScriptConfirmationBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user of the confirmation process that is about to occur and documenting the different flags used.
         shellFile.AddEchoCommand("\\n[9/16] -> Confirming Alignment...\\n");
@@ -209,7 +213,9 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptCompilationBlock(ShellFile shellFile, int tabs) 
+
+    /// <summary> Writes the APK compilation block to the provided shellFile. </summary>
+    private static void WriteBuildScriptCompilationBlock(ShellFile shellFile, int tabs) 
     {
         shellFile.AddEchoCommand("\\n[5/16] -> Compiling stub from source using javac...\\n", escaped: true, tabs);
         // Compiling the stub's Java source files.
@@ -223,7 +229,9 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptConversionBlock(ShellFile shellFile, int tabs) 
+
+    /// <summary> Writes the Java byte code conversion block to the provided shellFile. </summary>
+    private static void WriteBuildScriptConversionBlock(ShellFile shellFile, int tabs) 
     {
         shellFile.AddEchoCommand("\\n[6/16] -> Converting Java ByteCode to Android Dex...\\n", escaped: true, tabs);
         // java -cp {AndroidR8JarPath} // 
@@ -245,7 +253,11 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptHeaderBlock(ShellFile shellFile, int tabs) 
+
+    /// <summary> 
+    /// Writes the build script's header including the shebang operator, license source notice, and argument confirmation.
+    /// </summary>
+    private static void WriteBuildScriptHeaderBlock(ShellFile shellFile, int tabs) 
     {
         // Adding the shebang operator.
         // shellFile.AddLine("#!/usr/bin/env bash");
@@ -270,7 +282,9 @@ public class ShellCode
         shellFile.AddEmptyLines(2);
     }
 
-    public static void WriteBuildScriptManifestLinkBlock(ShellFile shellFile, int tabs) 
+
+    /// <summary> Writes the Android Manifest linking block to the provided shellFile. </summary>
+    private static void WriteBuildScriptManifestLinkBlock(ShellFile shellFile, int tabs) 
     {
         // echo -e \"\\n[4/16] -> Linking XML Manifest using aapt2...\\n\"
         shellFile.AddEchoCommand("\\n[4/16] -> Linking XML Manifest using aapt2...\\n", escaped: true, tabs);
@@ -291,7 +305,8 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptPackagingBlock(ShellFile shellFile, int tabs) 
+    /// <summary> Writes the Android Dex class packaging block to the specified shellFile. </summary>
+    private static void WriteBuildScriptPackagingBlock(ShellFile shellFile, int tabs) 
     {
         shellFile.AddEchoCommand("\\n[7/16] -> Packaging Output Dex Classes...\\n", escaped: true, tabs);
         
@@ -306,7 +321,8 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptResourcesBlock(ShellFile shellFile, int tabs) 
+    /// <summary> Writes the Stub's resource compilation block to the specified shellFile. </summary>
+    private static void WriteBuildScriptResourcesBlock(ShellFile shellFile, int tabs) 
     {
         // mkdir -p obj dex_out
         shellFile.AddMkdirCommand(directories: ["obj", "dex_out"], createParents: true);
@@ -323,8 +339,9 @@ public class ShellCode
         ]);
         shellFile.AddEmptyLine();
     }
-    
-    public static void WriteBuildScriptSigningBlock(ShellFile shellFile, ref int tabs) 
+
+    /// <summary> Writes the APK signing block to the specified shellFile. </summary>
+    private static void WriteBuildScriptSigningBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user that the aligned APK is going to be signed.
         shellFile.AddEchoCommand("\\n[11/16] -> Signing APK...\\n", escaped: true, tabs);
@@ -369,7 +386,10 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
-    public static void WriteBuildScriptCleanupBlock(ShellFile shellFile, ref int tabs) 
+    /// <summary> 
+    ///     Writes the final block containing cleanup operations to the specified shellFile. 
+    /// </summary>
+    private static void WriteBuildScriptCleanupBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user that leftover build artifacts will be removed.
         shellFile.AddEchoCommand("\\n[12/16] -> Removing leftover build artifacts...\\n", escaped: true, tabs);
@@ -389,6 +409,7 @@ public class ShellCode
         shellFile.AddEchoCommand("Build finalized for $APP_NAME!\\n", escaped: true, tabs);
     }
 
+    /// <summary> Writes the variable definition block to the specified shellFile. </summary>
     private static void WriteBuildScriptVariablesBlock(ShellFile shellFile, int tabs = 0) 
     {
         shellFile.AddVariableDeclaration(
