@@ -31,13 +31,13 @@ public class ShellCode
     /// <summary> A semantic representation of an empty JavaFileContent list. </summary>
     public static readonly ShellFileContent Empty = new([]);    
     public const string BuildFileName = "build.sh";
-    public const string InstallFileName = "run.sh";
+    public const string RunFileName = "run.sh";
 
     /// <summary> The shell files to be used for the compilation and installation of the generated stub. </summary>
     private static readonly List<ShellFile> ShellFiles =
     [
         new ShellFile(BuildFileName, Empty),
-        new ShellFile(InstallFileName, Empty),
+        new ShellFile(RunFileName, Empty),
     ];
 
     /// <summary> The current linux shell in use. </summary>
@@ -65,7 +65,7 @@ public class ShellCode
 
 
     /// <summary> Populates the contents of BuildFileName </summary>
-    public static void PopulateBuildScript()
+    private static void PopulateBuildScript()
     {
         if (!TryGetShellFile(BuildFileName, out var shellFile) || shellFile == null) {
             Environment.Exit(1);
@@ -97,7 +97,62 @@ public class ShellCode
         Environment.Exit(1);
     }
 
-    
+
+    /// <summary> Populates the contents of BuildFileName </summary>
+    private static void PopulateRunScript(string profileID = "0")
+    {
+        if (!TryGetShellFile(BuildFileName, out var shellFile) || shellFile == null) {
+            Environment.Exit(1);
+        }
+
+        int tabs = 0;
+
+
+        // Adding the shebang operator, license source notice, and usage check block.
+        WriteRunScriptHeaderBlock(shellFile, ref tabs);
+        shellFile.AddEmptyLine();
+
+
+        // Declaring the $PROFILE_ID
+        shellFile.AddVariableDeclaration(
+            variableName: "PROFILE_ID", 
+            value: profileID, 
+            comment: "Change this to \"10\" if you want to install the stub to a sandboxed or work profile."
+        );
+
+
+        // Removing leftover build artifacts
+        shellFile.AddCommand(command: "rm", [
+            new(Flag: "-rf", Value: "\"$2\" \"$2.idsig\" unaligned.apk compiled_resources.zip dex_out obj")
+        ], tabs);
+        shellFile.AddEmptyLine();
+
+
+        // Attempting to uninstall the stub (if previously installed.)
+        shellFile.AddEchoCommand(text: "Attempting to uninstall package: $1", escaped: false, tabs);
+        shellFile.AddCommand(command: ADBPath, [
+            new(Flag: "shell", Value: "pm uninstall --user $PROFILE_ID \"$1\"")
+        ]);
+        shellFile.AddSleepCommand(seconds: 1, tabs);
+        shellFile.AddEmptyLine();
+
+        // Building the stub
+        shellFile.AddEchoCommand(text: "Compiling dummy stub for source...", escaped: false, tabs);
+        shellFile.AddCommand(command: $"./{BuildFileName}", arguments: null, tabs);
+        shellFile.AddSleepCommand(seconds: 1, tabs);
+
+
+        RunDebugIfActive(shellFile);
+        Environment.Exit(1);
+    }
+
+
+    /// <summary> Populates the contents of the 2 required Shell script files for the generated stub. </summmary>
+    public static void PopulateShellFiles(string profileID = "0") 
+    {
+        PopulateBuildScript();
+        PopulateRunScript(profileID);
+    }
 
 
     /// <summary> If the application is being run via "dotnet run", the contents of the JavaFile is displayed. </summary>
@@ -305,6 +360,7 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
+
     /// <summary> Writes the Android Dex class packaging block to the specified shellFile. </summary>
     private static void WriteBuildScriptPackagingBlock(ShellFile shellFile, int tabs) 
     {
@@ -320,6 +376,7 @@ public class ShellCode
         ]);
         shellFile.AddEmptyLine();
     }
+
 
     /// <summary> Writes the Stub's resource compilation block to the specified shellFile. </summary>
     private static void WriteBuildScriptResourcesBlock(ShellFile shellFile, int tabs) 
@@ -339,6 +396,7 @@ public class ShellCode
         ]);
         shellFile.AddEmptyLine();
     }
+
 
     /// <summary> Writes the APK signing block to the specified shellFile. </summary>
     private static void WriteBuildScriptSigningBlock(ShellFile shellFile, ref int tabs) 
@@ -386,6 +444,7 @@ public class ShellCode
         shellFile.AddEmptyLine();
     }
 
+
     /// <summary> 
     ///     Writes the final block containing cleanup operations to the specified shellFile. 
     /// </summary>
@@ -408,6 +467,7 @@ public class ShellCode
         // Notifies the user that the build process has been completed.
         shellFile.AddEchoCommand("Build finalized for $APP_NAME!\\n", escaped: true, tabs);
     }
+
 
     /// <summary> Writes the variable definition block to the specified shellFile. </summary>
     private static void WriteBuildScriptVariablesBlock(ShellFile shellFile, int tabs = 0) 
@@ -453,4 +513,48 @@ public class ShellCode
         // shellFile.AddLine("PROJECT_ROOT=\"$(pwd)\"");
     }
 
+
+    /// <summary> 
+    /// Writes the build script's header including the shebang operator, license source notice, and argument confirmation.
+    /// </summary>
+    private static void WriteRunScriptHeaderBlock(ShellFile shellFile, ref int tabs) 
+    {
+        // Adding the shebang operator.
+        // shellFile.AddLine("#!/usr/bin/env bash");
+        shellFile.AddLine(ShebangOperator);
+
+        // Writing the GNUv3 license notice to the current shell file.
+        shellFile.WriteLicenseNotice();
+        shellFile.AddEmptyLine();
+
+        // Inserting the invalid usage block.
+        shellFile.AddInvalidUsageBlock([
+            new("packageName", "com.yourname.yourapp"),
+            new("apkFileName", "yourapp.apk"),
+        ], ref tabs);  
+    }
+
+
+    /// <summary> Writes the 2 required shell script files to the specified project directory. </summary>
+    public static void WriteShellFiles(string projectDirectory) 
+    {
+        foreach (var shellFile in ShellFiles) 
+        {
+            if (shellFile.Content.Length == 0) {
+                WriteWarningMessage($"Unable to write required shell script file:\n\t -> {shellFile.FileName}");
+                WriteErrorMessage("Current file contents is empty.", exit: true, exitCode: 1);
+            }
+
+            var filePath = Path.Combine(projectDirectory, shellFile.FileName);
+            try {
+                File.WriteAllLines(filePath, shellFile.Content.GetLines());   
+            }
+            catch (Exception ex) 
+            {
+                WriteWarningMessage($"Unable to write required shell script file:\n\t -> {shellFile.FileName}");
+                WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+            }
+
+        }
+    }
 }

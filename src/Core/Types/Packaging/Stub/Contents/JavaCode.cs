@@ -684,7 +684,7 @@ public class JavaCode
     }
 
 
-    /// <summary> Writes the 3 requires Java source files to the specified source directory. </summary>
+    /// <summary> Writes the 3 required Java source files to the specified source directory. </summary>
     public static void WriteSourceFiles(string JavaSourceDirectory) 
     {
         foreach (var javaFile in JavaFiles) 

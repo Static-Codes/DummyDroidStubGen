@@ -502,12 +502,8 @@ public class Device
                 _ => PackageRetrievalType.PACKAGE_NAME
             }
         );
-
         
-        # if DEBUG
-            WriteWarningMessage("Please implement logic to retrieve packages by label name in Device.cs");
-        #endif
-
+        WriteWarningMessage("Please implement logic to retrieve packages by label name in Device.cs");
         if (RetrievalType == PackageRetrievalType.APP_NAME) {
             // TODO: IMPLEMENT ME
             // Include Resources/Java/lib/*.jar

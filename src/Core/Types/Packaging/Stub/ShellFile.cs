@@ -72,7 +72,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
 
 
     /// <summary> Calls AddLine using "string.Join(' ', [command, ..parts])" </summary>
-    public void AddCommand(string command, ShellCommandArgument[]? arguments, int tabs = 0)
+    public void AddCommand(string command, ShellCommandArgument[]? arguments = null, int tabs = 0)
     {
         if (string.IsNullOrWhiteSpace(command)) {
             throw new ArgumentException(
@@ -255,6 +255,9 @@ public class ShellFile(string FileName, ShellFileContent Content)
     /// <summary> Calls AddLine using "{" </summary>
     public void AddOpeningBracket(int tabs = 0) => AddLine("{", tabs: tabs);
 
+
+    /// <summary> Calls AddLine($"sleep {seconds}", tabs) </summary>
+    public void AddSleepCommand(int seconds, int tabs) => AddLine($"sleep {seconds}", tabs);
 
     /// <summary> Declares and initializes a variable, with or without a comment. </summary>
     public void AddVariableDeclaration(string variableName, string value, string? comment = null, int tabs = 0) 

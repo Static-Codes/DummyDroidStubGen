@@ -18,6 +18,7 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
 using Stub.Contents;
 using static Global.Messaging;
+using static Stub.Contents.ShellCode;
 using static Stub.Contents.JavaCode;
 using static Stub.Contents.ProjectFileCode;
 
@@ -30,15 +31,15 @@ public class Generator
             WriteDebugMessage($"IconBuffer Length in bytes: {stubInfo.StubStructure.Icon.IconBuffer.Length}");
         #endif
 
+        // Populating then writing the two Shell script files to disk.
+        PopulateShellFiles(stubInfo.ProfileID);
+        WriteShellFiles(stubInfo.StubStructure.Directories.ProjectParent);
+
         // Writing the App Icon and AndroidManifest.xml to the project's parent directory.
         AndroidManifest manifest = new(stubInfo.StubStructure, stubInfo.PackageInfo);
         AppIcon.Write(stubInfo);
         manifest.Write();
 
-        // Populating then writing the three Java source files to disk.
-        PopulateSourceFiles(stubInfo.PackageInfo);
-        WriteSourceFiles(stubInfo.StubStructure.Directories.JavaCode);
-        
         // Writing the .classpath file to the project's parent directory.
         CreateClassPathFile(stubInfo.StubStructure.Directories.ProjectParent);
 
@@ -47,6 +48,10 @@ public class Generator
             parentDirectory: stubInfo.StubStructure.Directories.ProjectParent, 
             projectName: stubInfo.PackageInfo.Label
         );
+
+        // Populating then writing the three Java source files to disk.
+        PopulateSourceFiles(stubInfo.PackageInfo);
+        WriteSourceFiles(stubInfo.StubStructure.Directories.JavaCode);
 
         Environment.Exit(1);
     }
