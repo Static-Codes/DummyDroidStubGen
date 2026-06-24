@@ -6,7 +6,6 @@
 > handed over government ID.
 > **Every app and every device, worldwide, with no opt-out.**
 
-## DDSG
 DDSG (**DummyDroidStubGen**) is a simple, yet versatile linux app to generate *"Dummy"* packages (known as *"Stubs"*) that serve as entry points for another app.
 
 ## Use Cases
@@ -15,6 +14,15 @@ While there are a variety of use cases for **DDSG**, it was originally developed
 ## Hardware Requirements
 - **Android 5.0+ (Lollipop)**
 - **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
+
+## Features
+- Completely De-Googled*
+> DDSG contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Package.cs#L81) that makes a request to `play.google.com` to prevent duplicate package generation, however, this is disabled by default.
+
+- No Invasive Permissions
+
+- Customizable Icons
+> DDSG supports `.SVG`, `.XML` (DrawableVector), and `.WEBP` for the generated stub!
 
 ## Restrictions
 DDSG has a set of blacklisted apps that cannot be used to create a stub. For more information on the blacklist, click [here](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/FAQ.md#q-why-are-there-restrictions-on-the-apps-ddsg-can-open)
