@@ -73,135 +73,71 @@ public class ShellCode
 
         int tabs = 0;
 
-        # region Writing the script header
-
-        // Adding the shebang operator.
-        // shellFile.AddLine("#!/usr/bin/env bash");
-        shellFile.AddLine(ShebangOperator);
-
-        // Writing the GNUv3 license notice to the current shell file.
-        shellFile.WriteLicenseNotice();
+        WriteBuildScriptHeaderBlock(shellFile, tabs);
         
-        // Error handling and parameter validation
-        shellFile.AddLine("set -e", tabs);
-        shellFile.AddEmptyLine();
+        WriteBuildScriptResourcesBlock(shellFile, tabs);
 
-        // Inserting the invalid usage block.
-        shellFile.AddInvalidUsageBlock([
-            new("AppName", "OnDeviceLabelFetcher"),
-            new("Package/Directory/Structure", "com/staticcodes/odlf"),
-            new("packageName.apk", "odlf.apk")
-        ], ref tabs);
+        WriteBuildScriptManifestLinkBlock(shellFile, tabs);
 
-        // Declaring the build script's variables.
-        WriteBuildScriptVariables(shellFile, tabs);        
-        shellFile.AddEmptyLines(2);
+        WriteBuildScriptCompilationBlock(shellFile, tabs);
 
-        # endregion
-        
+        WriteBuildScriptConversionBlock(shellFile, tabs);
 
-        # region "Compiling stub's resources"
+        WriteBuildScriptPackagingBlock(shellFile, tabs);
 
-        // mkdir -p obj dex_out
-        shellFile.AddMkdirCommand(directories: ["obj", "dex_out"], createParents: true);
-        shellFile.AddEmptyLine();
+        WriteBuildScriptAlignmentBlock(shellFile, ref tabs);
 
-        // echo -e \"\\n[3/16] -> Compiling Resources for $APP_NAME...\\n\"
-        shellFile.AddEchoCommand("\\n[3/16] -> Compiling Resources for $APP_NAME...\\n");
+        WriteBuildScriptConfirmationBlock(shellFile, ref tabs);
 
-        // Compiling the stub's resources to compiled_resources.zip
-        // aapt2 compile --dir \"$PROJECT_ROOT/src/main/res\" -o \"$PROJECT_ROOT/compiled_resources.zip\"
-        shellFile.AddCommand($"{AAPT2Path} compile", [
-            new ShellCommandArgument(Flag: "--dir", Value: "$PROJECT_ROOT/src/main/res"),
-            new ShellCommandArgument(Flag: "-o", Value: "$PROJECT_ROOT/compiled_resources.zip")
-        ]);
-        shellFile.AddEmptyLine();
+        WriteBuildScriptSigningBlock(shellFile, ref tabs);
 
-        # endregion
+        WriteBuildScriptCleanupBlock(shellFile, ref tabs);
+
+        RunDebugIfActive(shellFile);
+        Environment.Exit(1);
+    }
+
+    
 
 
-        # region "Linking the XML manifest"
+    /// <summary> If the application is being run via "dotnet run", the contents of the JavaFile is displayed. </summary>
+    private static void RunDebugIfActive(ShellFile shellFile) 
+    {
+        #if DEBUG    
+            foreach (var line in shellFile.Content.Get()) 
+            {
+                string indent = GetDebugLinePadding(
+                    currentLineNumber: line.Number, 
+                    totalLines: shellFile.Content.Length
+                );
 
-        // echo -e \"\\n[4/16] -> Linking XML Manifest using aapt2...\\n\"
-        shellFile.AddEchoCommand("\\n[4/16] -> Linking XML Manifest using aapt2...\\n");
+                WriteDebugMessage($"Line {indent}{line.Number}: {line.Content}");
+            }
+        #endif
+    }
+    
 
-        // Linking the project's resources
-        // aapt2 link --auto-add-overlay \\
-        //       --manifest {RelativeManifestPath} \\
-        //       -I {AndroidSDKJarPath} \\
-        //       -R compiled_resources.zip \\
-        //       -o unaligned.apk
-        shellFile.AddCommand($"{AAPT2Path}", [
-            new ShellCommandArgument(Flag: "link",       Value: "--auto-add-overlay"),
-            new ShellCommandArgument(Flag: "--manifest", Value: RelativeManifestPath),
-            new ShellCommandArgument(Flag: "-I",         Value: AndroidSDKJarPath),
-            new ShellCommandArgument(Flag: "-R",         Value: "compiled_resources.zip"),
-            new ShellCommandArgument(Flag: "-o",         Value: "unaligned.apk")
-        ]);
-        shellFile.AddEmptyLine();
+    /// <summary> 
+    ///     Attempts to return a JavaFile object from JavaFiles using the provided fileName. <br/>
+    ///     If successful, file will be assigned this resolved JavaFile object, and returns true. <br/>
+    ///     Otherwise, file will be assigned a null value, and false will be returned.
+    /// </summary>
+    public static bool TryGetShellFile(string fileName, out ShellFile? file) 
+    {
+        file = null;
+        try {
+            file = ShellFiles.Where(f => f.FileName == fileName).FirstOrDefault();
+        }
+        catch (Exception ex) {
+            WriteWarningMessage($"Unable to lookup local stub source file: {fileName}");
+            WriteErrorMessage(ex.Message);
+            return false;
+        }
+        return file != null;
+    }
 
-        # endregion
-
-
-        # region "Compiling the stub's source to byte code"
-
-        shellFile.AddEchoCommand("\\n[5/16] -> Compiling stub from source using javac...\\n");
-        // Compiling the stub's Java source files.
-        // javac -d obj --release 8 -classpath {AndroidSDKJarPath} src/main/\"$PKG_DIR_STRUCTURE\"/*.java
-        shellFile.AddCommand(command: "javac", arguments: [
-            new ShellCommandArgument(Flag: "-d", Value: "obj"),
-            new ShellCommandArgument(Flag: "--release", Value: "8"), // The Java API to be used for compilation
-            new ShellCommandArgument(Flag: "-classpath", Value: AndroidSDKJarPath),
-            new ShellCommandArgument(Flag: "src/main/\"$PKG_DIR_STRUCTURE\"/*.java")
-        ]);
-        shellFile.AddEmptyLine();
-
-        # endregion
-
-
-        # region "Converting the byte code to Android DEX"
-
-        shellFile.AddEchoCommand("\\n[6/16] -> Converting Java ByteCode to Android Dex...\\n");
-        // java -cp {AndroidR8JarPath} // 
-        //      com.android.tools.r8.D8 //
-        //      --lib {AndroidSDKJarPath} //
-        //      --release //
-        //      --output dex_out/ obj/\"$CLASS_DIR\"*.class
-        // TODO: Make an alternative function called AddJavaCopyLine
-        // Converting the Java ByteCode to Android Dex.
-        shellFile.AddCommand(command: "java", [
-            new ShellCommandArgument(Flag: "-cp", Value: AndroidR8JarPath), 
-            new ShellCommandArgument(Flag: "com.android.tools.r8.D8"), // The class name for the D8 package.
-            new ShellCommandArgument(Flag: "--lib", Value: AndroidSDKJarPath),
-            // Indicating D8 should compile using the specified Java API version.
-            // TODO: Run tests with Value: "8"
-            new ShellCommandArgument(Flag: "--release"),
-            new ShellCommandArgument(Flag: "--output", "dex_out/ obj/\"$CLASS_DIR\"*.class")
-        ]);
-        shellFile.AddEmptyLine();
-
-        # endregion
-
-
-        # region "Packaging DEX classes"
-        
-        shellFile.AddEchoCommand("\\n[7/16] -> Packaging Output Dex Classes...\\n");
-        
-        // Packaging the dex output class
-        // zip -uj unaligned.apk dex_out/classes.dex
-        shellFile.AddCommand(command: "zip", [
-            new ShellCommandArgument(
-                Flag: "-uj", 
-                Value: "unaligned.apk dex_out/classes.dex"
-            )
-        ]);
-        shellFile.AddEmptyLine();
-        
-        # endregion
-
-
-        # region "Aligning APK"
-        
+    public static void WriteBuildScriptAlignmentBlock(ShellFile shellFile, ref int tabs) 
+    {
         // Notifying the user of the alignment process that is about to occur and documenting the different flags used.
         shellFile.AddEchoCommand("\\n[8/16] -> Aligning APK...\\n");
         shellFile.AddComment("-P | Aligns uncompressed .so libraries page size to X KiB chunks.");
@@ -228,12 +164,10 @@ public class ShellCode
         tabs--; // Decreasing tabs 1 -> 0
         shellFile.AddLine("fi");
         shellFile.AddEmptyLine();
-        
-        # endregion
+    }
 
-
-        # region "Confirming Alignment + Removing Unaligned APK"
-
+    public static void WriteBuildScriptConfirmationBlock(ShellFile shellFile, ref int tabs) 
+    {
         // Notifying the user of the confirmation process that is about to occur and documenting the different flags used.
         shellFile.AddEchoCommand("\\n[9/16] -> Confirming Alignment...\\n");
         shellFile.AddComment(" -c | Instructs zipalign to perform a confirmation instead of an overwrite");
@@ -273,14 +207,127 @@ public class ShellCode
             new ShellCommandArgument(Flag: "-f", Value: "unaligned.apk")
         ]);
         shellFile.AddEmptyLine();
+    }
 
-        # endregion
+    public static void WriteBuildScriptCompilationBlock(ShellFile shellFile, int tabs) 
+    {
+        shellFile.AddEchoCommand("\\n[5/16] -> Compiling stub from source using javac...\\n", escaped: true, tabs);
+        // Compiling the stub's Java source files.
+        // javac -d obj --release 8 -classpath {AndroidSDKJarPath} src/main/\"$PKG_DIR_STRUCTURE\"/*.java
+        shellFile.AddCommand(command: "javac", arguments: [
+            new ShellCommandArgument(Flag: "-d", Value: "obj"),
+            new ShellCommandArgument(Flag: "--release", Value: "8"), // The Java API to be used for compilation
+            new ShellCommandArgument(Flag: "-classpath", Value: AndroidSDKJarPath),
+            new ShellCommandArgument(Flag: "src/main/\"$PKG_DIR_STRUCTURE\"/*.java")
+        ]);
+        shellFile.AddEmptyLine();
+    }
 
+    public static void WriteBuildScriptConversionBlock(ShellFile shellFile, int tabs) 
+    {
+        shellFile.AddEchoCommand("\\n[6/16] -> Converting Java ByteCode to Android Dex...\\n", escaped: true, tabs);
+        // java -cp {AndroidR8JarPath} // 
+        //      com.android.tools.r8.D8 //
+        //      --lib {AndroidSDKJarPath} //
+        //      --release //
+        //      --output dex_out/ obj/\"$CLASS_DIR\"*.class
+        // TODO: Make an alternative function called AddJavaCopyLine
+        // Converting the Java ByteCode to Android Dex.
+        shellFile.AddCommand(command: "java", [
+            new ShellCommandArgument(Flag: "-cp", Value: AndroidR8JarPath), 
+            new ShellCommandArgument(Flag: "com.android.tools.r8.D8"), // The class name for the D8 package.
+            new ShellCommandArgument(Flag: "--lib", Value: AndroidSDKJarPath),
+            // Indicating D8 should compile using the specified Java API version.
+            // TODO: Run tests with Value: "8"
+            new ShellCommandArgument(Flag: "--release"),
+            new ShellCommandArgument(Flag: "--output", "dex_out/ obj/\"$CLASS_DIR\"*.class")
+        ]);
+        shellFile.AddEmptyLine();
+    }
 
-        # region Signing APK
+    public static void WriteBuildScriptHeaderBlock(ShellFile shellFile, int tabs) 
+    {
+        // Adding the shebang operator.
+        // shellFile.AddLine("#!/usr/bin/env bash");
+        shellFile.AddLine(ShebangOperator);
+
+        // Writing the GNUv3 license notice to the current shell file.
+        shellFile.WriteLicenseNotice();
         
+        // Error handling and parameter validation
+        shellFile.AddLine("set -e", tabs);
+        shellFile.AddEmptyLine();
+
+        // Inserting the invalid usage block.
+        shellFile.AddInvalidUsageBlock([
+            new("AppName", "OnDeviceLabelFetcher"),
+            new("Package/Directory/Structure", "com/staticcodes/odlf"),
+            new("packageName.apk", "odlf.apk")
+        ], ref tabs);
+
+        // Declaring the build script's variables.
+        WriteBuildScriptVariablesBlock(shellFile, tabs);        
+        shellFile.AddEmptyLines(2);
+    }
+
+    public static void WriteBuildScriptManifestLinkBlock(ShellFile shellFile, int tabs) 
+    {
+        // echo -e \"\\n[4/16] -> Linking XML Manifest using aapt2...\\n\"
+        shellFile.AddEchoCommand("\\n[4/16] -> Linking XML Manifest using aapt2...\\n", escaped: true, tabs);
+
+        // Linking the project's resources
+        // aapt2 link --auto-add-overlay \\
+        //       --manifest {RelativeManifestPath} \\
+        //       -I {AndroidSDKJarPath} \\
+        //       -R compiled_resources.zip \\
+        //       -o unaligned.apk
+        shellFile.AddCommand($"{AAPT2Path}", [
+            new ShellCommandArgument(Flag: "link",       Value: "--auto-add-overlay"),
+            new ShellCommandArgument(Flag: "--manifest", Value: RelativeManifestPath),
+            new ShellCommandArgument(Flag: "-I",         Value: AndroidSDKJarPath),
+            new ShellCommandArgument(Flag: "-R",         Value: "compiled_resources.zip"),
+            new ShellCommandArgument(Flag: "-o",         Value: "unaligned.apk")
+        ], tabs);
+        shellFile.AddEmptyLine();
+    }
+
+    public static void WriteBuildScriptPackagingBlock(ShellFile shellFile, int tabs) 
+    {
+        shellFile.AddEchoCommand("\\n[7/16] -> Packaging Output Dex Classes...\\n", escaped: true, tabs);
+        
+        // Packaging the dex output class
+        // zip -uj unaligned.apk dex_out/classes.dex
+        shellFile.AddCommand(command: "zip", [
+            new ShellCommandArgument(
+                Flag: "-uj", 
+                Value: "unaligned.apk dex_out/classes.dex"
+            )
+        ]);
+        shellFile.AddEmptyLine();
+    }
+
+    public static void WriteBuildScriptResourcesBlock(ShellFile shellFile, int tabs) 
+    {
+        // mkdir -p obj dex_out
+        shellFile.AddMkdirCommand(directories: ["obj", "dex_out"], createParents: true);
+        shellFile.AddEmptyLine();
+
+        // echo -e \"\\n[3/16] -> Compiling Resources for $APP_NAME...\\n\"
+        shellFile.AddEchoCommand("\\n[3/16] -> Compiling Resources for $APP_NAME...\\n", escaped: true, tabs);
+
+        // Compiling the stub's resources to compiled_resources.zip
+        // aapt2 compile --dir \"$PROJECT_ROOT/src/main/res\" -o \"$PROJECT_ROOT/compiled_resources.zip\"
+        shellFile.AddCommand($"{AAPT2Path} compile", [
+            new ShellCommandArgument(Flag: "--dir", Value: "$PROJECT_ROOT/src/main/res"),
+            new ShellCommandArgument(Flag: "-o", Value: "$PROJECT_ROOT/compiled_resources.zip")
+        ]);
+        shellFile.AddEmptyLine();
+    }
+    
+    public static void WriteBuildScriptSigningBlock(ShellFile shellFile, ref int tabs) 
+    {
         // Notifying the user that the aligned APK is going to be signed.
-        shellFile.AddEchoCommand("\\n[11/16] -> Signing APK...\\n");
+        shellFile.AddEchoCommand("\\n[11/16] -> Signing APK...\\n", escaped: true, tabs);
 
         // Checking if the debug.keystore file exists, if not it is generated.
         shellFile.AddLine("if [ ! -f \"debug.keystore\" ]; then", tabs);
@@ -308,9 +355,11 @@ public class ShellCode
         shellFile.AddEmptyLine();
 
         // Performing a self signature on the Aligned APK using the debug.keystore file from above.
-        shellFile.AddLine("if ! apksigner sign --ks debug.keystore --ks-pass pass:android --out \"$APK_NAME\" aligned.apk; then");
+        shellFile.AddLine(
+            line: "if ! apksigner sign --ks debug.keystore --ks-pass pass:android --out \"$APK_NAME\" aligned.apk; then", 
+            tabs
+        );
         
-
         tabs++; // Increasing tabs 0 -> 1
         shellFile.AddEchoCommand("Unable to sign the APK..", escaped: false, tabs);
         shellFile.AddExitCommand(status: 1, tabs);
@@ -318,12 +367,10 @@ public class ShellCode
         tabs--; // Decreasing tabs 1 -> 0
         shellFile.AddLine("fi", tabs);
         shellFile.AddEmptyLine();
-        
-        # endregion
+    }
 
-
-        # region Final Operations
-        
+    public static void WriteBuildScriptCleanupBlock(ShellFile shellFile, ref int tabs) 
+    {
         // Notifying the user that leftover build artifacts will be removed.
         shellFile.AddEchoCommand("\\n[12/16] -> Removing leftover build artifacts...\\n", escaped: true, tabs);
         
@@ -340,52 +387,9 @@ public class ShellCode
         
         // Notifies the user that the build process has been completed.
         shellFile.AddEchoCommand("Build finalized for $APP_NAME!\\n", escaped: true, tabs);
-
-        # endregion
-
-        RunDebugIfActive(shellFile);
-        Environment.Exit(1);
     }
 
-
-    /// <summary> If the application is being run via "dotnet run", the contents of the JavaFile is displayed. </summary>
-    private static void RunDebugIfActive(ShellFile shellFile) 
-    {
-        #if DEBUG    
-            foreach (var line in shellFile.Content.Get()) 
-            {
-                string indent = GetDebugLinePadding(
-                    currentLineNumber: line.Number, 
-                    totalLines: shellFile.Content.Length
-                );
-
-                WriteDebugMessage($"Line {indent}{line.Number}: {line.Content}");
-            }
-        #endif
-    }
-    
-
-    /// <summary> 
-    ///     Attempts to return a JavaFile object from JavaFiles using the provided fileName. <br/>
-    ///     If successful, file will be assigned this resolved JavaFile object, and returns true. <br/>
-    ///     Otherwise, file will be assigned a null value, and false will be returned.
-    /// </summary>
-    public static bool TryGetShellFile(string fileName, out ShellFile? file) 
-    {
-        file = null;
-        try {
-            file = ShellFiles.Where(f => f.FileName == fileName).FirstOrDefault();
-        }
-        catch (Exception ex) {
-            WriteWarningMessage($"Unable to lookup local stub source file: {fileName}");
-            WriteErrorMessage(ex.Message);
-            return false;
-        }
-        return file != null;
-    }
-
-
-    private static void WriteBuildScriptVariables(ShellFile shellFile, int tabs = 0) 
+    private static void WriteBuildScriptVariablesBlock(ShellFile shellFile, int tabs = 0) 
     {
         shellFile.AddVariableDeclaration(
             variableName: "APP_NAME", 
@@ -427,4 +431,5 @@ public class ShellCode
         );
         // shellFile.AddLine("PROJECT_ROOT=\"$(pwd)\"");
     }
+
 }
