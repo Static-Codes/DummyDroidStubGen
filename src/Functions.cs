@@ -156,21 +156,23 @@ public class Functions
                 // The parts of the line are split by the closing bracket to isolate each section.
                 // Example: [Key]: [Value] -> ["", "Key", "Value", ""]
                 var parts = line.Split(']');
-                
-                if (parts.Length >= 3)
-                {
-                    // Locating the opening bracket in part[0] and the opening bracket in part[1]
-                    int keyStart = parts[0].IndexOf('[');
-                    int valStart = parts[1].IndexOf('[');
 
-                    if (keyStart != -1 && valStart != -1)
-                    {
-                        string key = parts[0][(keyStart + 1)..];
-                        string value = parts[1][(valStart + 1)..];
-                        dict[key] = value;
-                    }
+                if (parts.Length < 3) {
+                    continue;
+                }
+
+                int keyStart = parts[0].IndexOf('[');
+                // Locating the opening bracket in part[0] and the opening bracket in part[1]
+                int valStart = parts[1].IndexOf('[');
+
+                if (keyStart != -1 && valStart != -1)
+                {
+                    string key = parts[0][(keyStart + 1)..];
+                    string value = parts[1][(valStart + 1)..];
+                    dict[key] = value;
                 }
             }
+
             catch (Exception ex)
             {
                 WriteWarningMessage($"Unable to parse device property: '{line}'");
@@ -210,13 +212,13 @@ public class Functions
         {
             if (e.Data == null) {
                 errorDone.TrySetResult(true);
+                return;
             }
-            else {
-                lock (error) {
-                    error.Add(e.Data.Trim());
-                }
-                errorHandler?.Invoke(sender, e);
+            
+            lock (error) {
+                error.Add(e.Data.Trim());
             }
+            errorHandler?.Invoke(sender, e);
         };
     }
 
@@ -233,13 +235,12 @@ public class Functions
         {
             if (e.Data == null) {
                 outputDone.TrySetResult(true);
+                return;
             }
-            else {
-                lock (output) {
-                    output.Add(e.Data.Trim());
-                }
-                outputHandler?.Invoke(sender, e);
+            lock (output) {
+                output.Add(e.Data.Trim());
             }
+            outputHandler?.Invoke(sender, e);
         };
     }
 
@@ -250,7 +251,7 @@ public class Functions
     /// </summary>
     public static PairingInfo PromptForPairingInfo(string deviceIP) 
     {
-        Console.WriteLine($"To locate your pairing code, please go to:\n{WIFISetting}\n");
+        WriteInformation($"To locate your pairing code, please go to:\n{WIFISetting}\n");
 
         return new(
             deviceIP,
@@ -266,7 +267,7 @@ public class Functions
     /// </summary>
     public static PairingInfo PromptForPairingCodeOnly(string deviceIP, string pairingPort) 
     {
-        Console.WriteLine($"To locate your pairing code, please go to:\n{WIFISetting}\n");
+        WriteInformation($"To locate your pairing code, please go to:\n{WIFISetting}\n");
 
         return new(
             deviceIP,
@@ -313,8 +314,7 @@ public class Functions
                 exitCode = await WriteInputToProcessStandardInput(process, inputArg, outputDone, errorDone);
             }
 
-            else 
-            {
+            else {
                 await process.WaitForExitAsync();
                 exitCode = (uint)process.ExitCode;
             }
