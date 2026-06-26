@@ -15,6 +15,17 @@ While there are a variety of use cases for **DDSG**, it was originally developed
 - **Android 5.0+ (Lollipop)**
 - **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
 
+
+
+## Software Requirements
+- aapt2
+- adb
+- apksigner
+- java (8+)
+- javac
+- unzip
+- zip
+
 ## Features
 - Completely De-Googled*
 > DDSG contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Package.cs#L81) that makes a request to `play.google.com` to prevent duplicate package generation, however, this is disabled by default.
