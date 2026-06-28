@@ -30,4 +30,16 @@ public static class ShellTypeExtension
             _ => "#!/bin/sh"
         };
     }
+
+    /// <summary> Converts the current ShellType to it's equivalent filepath. </summary>
+    public static string ToPath(this ShellType shellType) 
+    {
+        return shellType switch {
+            ShellType.BASH => "/bin/bash",
+            ShellType.FISH => "/bin/fish",
+            ShellType.SH => "/bin/sh",
+            ShellType.ZSH => "/bin/zsh",
+            _ => "#!/bin/sh"
+        };
+    }
 }

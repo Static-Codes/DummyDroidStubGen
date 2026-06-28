@@ -43,6 +43,9 @@ public class ShellCode
     /// <summary> The current linux shell in use. </summary>
     public static readonly ShellType CurrentShellType = FindCurrent();
 
+    /// <summary> The path to the file being used as the current linux shell. </summary>
+    public static readonly string CurrentShellPath = CurrentShellType.ToPath();
+
     /// <summary> The current linux shell in use. </summary>
     public static readonly string ShebangOperator = CurrentShellType.ToShebangOperator();
 

@@ -18,6 +18,7 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
 using Core.Extensions;
 using static Global.Messaging;
+using static FileStructure.NonNativeIconConversionStatus;
 
 public class FileStructure 
 {
@@ -34,10 +35,60 @@ public class FileStructure
     private static bool BackupPreviousBuild() { // TODO: IMPLEMENT ME
         throw new NotImplementedException("Please implement me before committing.");
     }
+    
+    public record NonNativeIconConversion(bool Required, bool Occurred, string? Path = null);
+
+    public enum NonNativeIconConversionStatus { UNUSED = -1, FAILURE = 0, SUCCESS = 1  }
+
+    public record NonNativeIconResponse(NonNativeIconConversion Conversion, NonNativeIconConversionStatus Status) 
+    {
+        public bool CheckForSuccess() => Status switch
+        {
+            FAILURE => false,
+            _ => true, // Handles both SUCCESS and UNUSED.
+        };
+    }
+
+    /// <summary>
+    /// Will exit if iconFileType is UNSET or the svg conversion fails <br/>
+    /// 
+    /// Returns: 
+    /// A boolean detailing if the file contents was converted. <br/> 
+    /// A nullable string that will either be null or contain the path to the converted file.
+    /// </summary>
+    public static NonNativeIconResponse HandleNonNativeIconFormats(IconFileType iconFileType) 
+    {
+        WriteWarningMessage("Please implement SVG to Android Drawable Conversion in FileStructure.cs");
+        
+        if (iconFileType == IconFileType.UNSET) {
+            WriteWarningMessage("Unable to create the internal directory structure for the stub.");
+            WriteErrorMessage(
+                message: "Unsupported file format provided, supported formats include: '.svg', '.webp', and '.xml'", 
+                exit: true, 
+                exitCode: 1
+            );
+        }
+
+        else if (iconFileType == IconFileType.SVG) {
+            // return (converted: true, conversionPath: "");
+            throw new NotImplementedException("Please implement me before committing");
+        }
+
+        return new NonNativeIconResponse
+        (
+            Conversion: new NonNativeIconConversion(
+                Required: false,
+                Occurred: false
+            ), 
+            Status: UNUSED
+        );
+    }
+
 
     /// <summary> Creates a new instance of FileStructure for the current stub. </summary>
     public static FileStructure New(string ProjectDirectory, string PackageName, string InputIconPath) 
     {
+
         if (!Directory.Exists(ProjectDirectory)) {
             WriteWarningMessage("Unable to create the internal directory structure for the stub.");
             WriteErrorMessage($"The specifed directory does not exist at: {ProjectDirectory}", exit: true, exitCode: 1);
@@ -53,33 +104,11 @@ public class FileStructure
         string? iconFileExt = null;
         var iconFileType = InputIconPath.ToIconFileType(ref iconFileExt);
 
-        // TODO: Create a function using these two conditionals
-        // public static (bool converted, string? conversionPath) HandleNonNativeIconFormats()
-        ///// <summary>
-        ///// Will exit if iconFileType is UNSET or the svg conversion fails
-        ///// 
-        ///// Returns: 
-        ///// A boolean detailing if the file contents was converted. <br/> 
-        ///// A nullable string that will either be null or contain the path to the converted file.
-        ///// </summary>
+        (var Conversion, var Status) = HandleNonNativeIconFormats(iconFileType); 
         
-        # if DEBUG
-            WriteWarningMessage("Please implement SVG to Android Drawable Conversion in FileStructure.cs");
-        #endif
-        
-        if (iconFileType == IconFileType.UNSET) {
-            WriteWarningMessage("Unable to create the internal directory structure for the stub.");
-            WriteErrorMessage(
-                message: "Unsupported file format provided, supported formats include: '.svg', '.webp', and '.xml'", 
-                exit: true, 
-                exitCode: 1
-            );
-        }
-
-        // TODO: Implement SVG to xml conversion.
-        else if (iconFileType == IconFileType.SVG) {
-            
-            throw new NotImplementedException("Please implement me before committing");
+        if (Conversion.Required && !Conversion.Occurred || Status == FAILURE) {
+            WriteWarningMessage("Icon file conversion failed.");
+            WriteErrorMessage("The conversion either didnt occur, or failed.", exit: true, exitCode: 1);
         }
 
         // At this point the file will either be .webp or .xml and can be natively embedded as the Stub's icon.

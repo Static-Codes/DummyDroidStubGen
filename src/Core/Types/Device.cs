@@ -21,8 +21,12 @@ using CliWrap;
 using CliWrap.Buffered;
 using Core.Extensions;
 using CPU;
+using DummyDroidStubGen.Core.Helpers;
 using Packaging;
+using System.Runtime.Versioning;
+using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Versioning;
 
 
@@ -32,10 +36,12 @@ using static Common.InputValidation;
 using static Functions;
 using static Global.Constants;
 using static Global.Messaging;
+using static Helpers.IO.FileHelper;
 using static Helpers.IO.InputHelper;
 using static Helpers.PSIHelper;
-using System.Text;
+using static Packaging.Stub.Contents.ShellCode;
 
+[UnsupportedOSPlatform("windows")]
 public class Device
 {
     /// <summary> 
@@ -301,7 +307,74 @@ public class Device
 
             if (result.ExitCode != 0) {
                 throw new Exception(
-                    $"The process associated with GetPackagesAsync() returned a non-zero status code: {result.ExitCode}"
+                    $"The process associated with GetPackagesWithoutLabelsAsync() returned a non-zero status code: {result.ExitCode}"
+                );
+            }
+            
+            #if DEBUG
+                WriteDebugMessage(result.StandardOutput); 
+            #endif
+
+            var sanitizedResults = result.StandardOutput.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            
+            foreach (var line in sanitizedResults) 
+            {
+                var parts = line.Split('|');
+                if (parts.Length >= 2) 
+                {
+                    packages.Add(new Package(
+                        name: parts[0], 
+                        category: PackageCategory.Commercial,
+                        baseCodePath: parts[1]
+                    ));
+                }
+            }
+        }
+
+        catch (Exception ex) {
+            WriteWarningMessage("Unable to retrieve a list of installed third party packages on the current device.");
+            WriteErrorMessage(ex.Message);
+        }
+
+        return packages;
+    }
+
+    /// <summary>
+    ///     Uses the current device's PackageManager to return a list of packages and their base APK code paths. <br/>
+    ///     
+    ///     Due to limitations with PackageManager, the app name for each of these packages must be queried separately.
+    /// </summary>
+    private async Task<List<Package>> GetPackagesWithLabelsAsync() 
+    {
+        
+        var runScriptPath = Path.Combine(ODLFSubDirectory, RunFileName);
+        var appName = "OnDeviceLabelFetcher";
+        var packageName = "com.staticcodes.odlf";
+
+
+        // chmod +x build.sh && chmod +x run.sh
+        // Use ./run.sh "OnDeviceLabelFetcher" "com.staticcodes.odlf"
+        var retrievalCommand = $"./{runScriptPath} \"{appName}\" \"{packageName}\"";
+
+        var buildFileNameSet = PermissionHelper.TrySetExecutablePermissions(BuildFileName);
+        PermissionHelper.TrySetExecutablePermissions(RunFileName);
+
+        List<Package> packages = [];
+
+        try 
+        {
+
+            var result = await Cli.Wrap(CurrentShellPath)
+                .WithArguments([
+                    GetStartingADBArgument(), 
+                    retrievalCommand
+                ])
+                // .WithValidation(CommandResultValidation.None)
+                .ExecuteBufferedAsync(Encoding.UTF8);
+
+            if (result.ExitCode != 0) {
+                throw new Exception(
+                    $"The process associated with GetPackagesWithLabelsAsync() returned a non-zero status code: {result.ExitCode}"
                 );
             }
             
@@ -354,7 +427,7 @@ public class Device
     }
 
     
-    /// <summary> Calls PairDeviceOverWifi and ConnectPairedDeviceOverWifi </summary
+    /// <summary> Calls PairDeviceOverWifi() and ConnectPairedDeviceOverWifi() </summary
     private async void PairAndConnectDeviceOverWifi()
     {
         // Pairing the device to adb over TCP.
@@ -363,6 +436,7 @@ public class Device
         // Connecting to the paired device over adb.
         await ConnectPairedDeviceOverWifi();
     }
+
 
     /// <summary>
     ///     Pairs a device over WiFi (if it is not already paired). <br/>
@@ -422,39 +496,6 @@ public class Device
     }
 
 
-    /// <summary>
-    ///     Sets InstalledThirdPartyPackages for the current device object. <br/>
-    ///     
-    ///     This will be called by SetInstalledPackages() when the user selects "Select using a package name".
-    /// </summary>
-    private async void SetInstalledPackagesWithoutLabels()
-    {
-        var isUSB = ConnectionStatus.Method == USB;
-
-        if (isUSB && ConnectionStatus.Connected) {
-            WriteErrorMessage(
-                message: $"No connected devices were detected.\n\n{ConnectionSection}",
-                exit: true,
-                exitCode: 1
-            );
-        }
-
-        // If the current device is connected, the method is guaranteed to be set.
-        // If the current device is connected over USB, then ID becomes the device's serial number.
-        if (isUSB) {
-            ID = SerialNumber; 
-        }
-        else {
-            PairAndConnectDeviceOverWifi();
-        }
-
-        WriteInformation("Starting retrieval operations, please wait...");
-
-        // Updating the device object's internal state to track the parsed packages.
-        InstalledThirdPartyPackages = await GetPackagesWithoutLabelsAsync();
-    }
-
-
     /// <summary> 
     ///     Attempts to parse the Android OS Version from the provided DeviceProperties object. <br/>
     ///     Also updates the AndroidAPILevel based on the associated Android OS Version. 
@@ -467,7 +508,10 @@ public class Device
     }
     
 
-    public void SetInstalledPackages() 
+    /// <summary> 
+    ///     Instructs the user to select a package resolution method, then updates Device object's internal package list.
+    /// </summary> 
+    public async Task SetInstalledPackages() 
     {
         WriteInformation("DDSG provides two methods to select your desired package.");
         WriteInformation(
@@ -504,16 +548,8 @@ public class Device
         );
         
         WriteWarningMessage("Please implement logic to retrieve packages by label name in Device.cs");
-        if (RetrievalType == PackageRetrievalType.APP_NAME) {
-            // TODO: IMPLEMENT ME
-            // Include Resources/Java/lib/*.jar
-            // Include Resources/Java/OnDeviceLabelFetcher/*
-            // Unzip lib.zip and odlf.zip to $HOME/.config/DummyDroidStubGen/Resources/
-            // chmod +x run.sh && chmod +x run.sh
-            // Use ./run.sh "OnDeviceLauncher" "com.staticcodes.odlf"
-        } else {
-            SetInstalledPackagesWithoutLabels();
-        }
+
+        await UpdateInstalledPackages(usingLabels: RetrievalType == PackageRetrievalType.APP_NAME);
     }
 
 
@@ -527,6 +563,10 @@ public class Device
         PageSizeIs16KB = PageSize == CPUPageSize._16KB;
     }
 
+
+    /// <summary> 
+    /// Updates the Device object's internal PackageRetrievalType (if the provided value differs from the current one).
+    /// </summary>
     private void SetRetrievalType(PackageRetrievalType retrievalType) 
     {
         if (RetrievalType != retrievalType) {
@@ -534,8 +574,48 @@ public class Device
         }
     }
 
+
+    /// <summary> 
+    ///     Updates the current Device object's Serial Number using the value returned by GetProperties().
+    /// </summary>
     private void SetSerialNumber() {
         SerialNumber = Properties!.GetSerialNumber();
+    }
+
+
+    /// <summary>
+    ///     Sets InstalledThirdPartyPackages for the current device object. <br/>
+    ///     
+    ///     This will be called by SetInstalledPackages() when the user selects "Select using a package name".
+    /// </summary>
+    private async Task UpdateInstalledPackages(bool usingLabels = false)
+    {
+        var isUSB = ConnectionStatus.Method == USB;
+
+        if (isUSB && ConnectionStatus.Connected) {
+            WriteErrorMessage(
+                message: $"No connected devices were detected.\n\n{ConnectionSection}",
+                exit: true,
+                exitCode: 1
+            );
+        }
+
+        // If the current device is connected, the method is guaranteed to be set.
+        // If the current device is connected over USB, then ID becomes the device's serial number.
+        if (isUSB) {
+            ID = SerialNumber; 
+        }
+        else {
+            PairAndConnectDeviceOverWifi();
+        }
+
+        WriteInformation("Starting retrieval operations, please wait...");
+
+        // Updating the device object's internal state to track the parsed packages.
+        InstalledThirdPartyPackages = usingLabels switch {
+            true => await GetPackagesWithLabelsAsync(),
+            false => await GetPackagesWithoutLabelsAsync()
+        };
     }
 
 
