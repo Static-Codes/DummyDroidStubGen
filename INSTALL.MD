@@ -5,6 +5,5 @@
 
 ### Debian
 ```bash
-sudo apt-get update
-sudo apt install -y aapt2 adb apk java javac unzip zip
+sudo apt-get update && sudo apt install -y aapt2 adb apk java javac unzip zip
 ```
