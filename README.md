@@ -16,8 +16,7 @@ While there are a variety of use cases for **DDSG**, it was originally developed
 - **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
 
 
-
-## Software Requirements
+## Dependencies
 - aapt2
 - adb
 - apksigner
