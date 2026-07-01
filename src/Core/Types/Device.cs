@@ -376,7 +376,7 @@ public class Device
                 WriteDebugMessage(result.StandardOutput); 
             #endif
 
-            var sanitizedResults = result.StandardOutput.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            var sanitizedResults = result.StandardOutput.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)[1..];
             
             foreach (var line in sanitizedResults) 
             {
@@ -386,7 +386,7 @@ public class Device
                     packages.Add(new Package(
                         name: parts[0], 
                         category: PackageCategory.Commercial,
-                        baseCodePath: parts[1]
+                        label: parts[1]
                     ));
                 }
             }
