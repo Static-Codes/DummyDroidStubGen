@@ -46,8 +46,31 @@ public class ShellCode
     /// <summary> The path to the file being used as the current linux shell. </summary>
     public static readonly string CurrentShellPath = CurrentShellType.ToPath();
 
-    /// <summary> The current linux shell in use. </summary>
-    public static readonly string ShebangOperator = CurrentShellType.ToShebangOperator();
+    /// <summary> The shebang operator using the current linux shell. </summary>
+    public static readonly string ShebangOperator = $"#!{CurrentShellPath}";
+
+    /// <summary> 
+    ///     Attempts to resolve the absolute path to the provided shell script. <br/>
+    /// 
+    ///     Returns the absolute path to the script if all the following are true:
+    /// 
+    ///     - Parameter scriptDirectory is NOT null. <br/>
+    ///     - Value for Parameter scriptDirectory resolves to an existing directory. <br/>
+    ///     - Value for Parameter scriptFileName is either BuildFileName or RunFileName. <br/>
+    ///     
+    ///     Otherwise, returns the relative path to the script -> $"./{scriptFileName}".
+    /// </summary>
+    private static string GetAbsoluteScriptPath(string scriptFileName, string? scriptDirectory = null) 
+    {
+        return true switch {
+            _ when scriptDirectory == null => GetRelativeScriptPath(scriptFileName),
+            _ when !Directory.Exists(scriptDirectory) => GetRelativeScriptPath(scriptFileName),
+            _ when ShellFiles.All(file => file.FileName != BuildFileName) => GetRelativeScriptPath(scriptFileName),
+            _ => Path.Combine(scriptDirectory, scriptFileName)
+        };
+    }
+
+    private static string GetRelativeScriptPath(string scriptFileName) => $"./{scriptFileName}";
 
 
     /// <summary> 
@@ -101,10 +124,10 @@ public class ShellCode
     }
 
 
-    /// <summary> Populates the contents of BuildFileName </summary>
-    private static void PopulateRunScript(string profileID = "0")
+    /// <summary> Populates the contents of RunFileName </summary>
+    private static void PopulateRunScript(string profileID = "0", string? scriptDirectory = null)
     {
-        if (!TryGetShellFile(BuildFileName, out var shellFile) || shellFile == null) {
+        if (!TryGetShellFile(RunFileName, out var shellFile) || shellFile == null) {
             Environment.Exit(1);
         }
 
@@ -141,7 +164,11 @@ public class ShellCode
 
         // Building the stub
         shellFile.AddEchoCommand(text: "Compiling dummy stub for source...", escaped: false, tabs);
-        shellFile.AddCommand(command: $"./{BuildFileName}", arguments: null, tabs);
+        shellFile.AddCommand(
+            command: GetAbsoluteScriptPath(RunFileName, scriptDirectory), 
+            arguments: null, 
+            tabs
+        );
         shellFile.AddSleepCommand(seconds: 1, tabs);
 
 
@@ -193,7 +220,7 @@ public class ShellCode
         }
         return file != null;
     }
-
+    
 
     /// <summary> Writes the APK alignment block to the provided shellFile. </summary>
     private static void WriteBuildScriptAlignmentBlock(ShellFile shellFile, ref int tabs) 

@@ -14,12 +14,10 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
 namespace DummyDroidStubGen.Core.Helpers; 
 
 
-[UnsupportedOSPlatform("windows")]
 public partial class PermissionHelper
 {
     // Apple's libc supports both Utf8 and Utf16 but Linux's Glibc only supports Utf8
@@ -64,6 +62,6 @@ public partial class PermissionHelper
     }
 
     public static bool TrySetExecutablePermissions(string filePath) {
-        return !HasExecutablePermissions(filePath) ? SetExecutablePermissions(filePath) : true;
+        return HasExecutablePermissions(filePath) || SetExecutablePermissions(filePath);
     }
 }

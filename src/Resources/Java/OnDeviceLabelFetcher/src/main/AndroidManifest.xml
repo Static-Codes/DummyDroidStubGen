@@ -45,7 +45,7 @@
     <application 
         android:debuggable="true"
         android:label="OnDeviceLabelFetcher" 
-        android:icon="@drawable/placeholder"
+        android:icon="@drawable/icon"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.NoTitleBar">
 

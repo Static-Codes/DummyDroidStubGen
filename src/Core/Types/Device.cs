@@ -23,7 +23,7 @@ using Core.Extensions;
 using CPU;
 using DummyDroidStubGen.Core.Helpers;
 using Packaging;
-using System.Runtime.Versioning;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -41,7 +41,6 @@ using static Helpers.IO.InputHelper;
 using static Helpers.PSIHelper;
 using static Packaging.Stub.Contents.ShellCode;
 
-[UnsupportedOSPlatform("windows")]
 public class Device
 {
     /// <summary> 
@@ -344,35 +343,30 @@ public class Device
     ///     
     ///     Due to limitations with PackageManager, the app name for each of these packages must be queried separately.
     /// </summary>
-    private async Task<List<Package>> GetPackagesWithLabelsAsync() 
+    private static async Task<List<Package>> GetPackagesWithLabelsAsync() 
     {
-        
-        var runScriptPath = Path.Combine(ODLFSubDirectory, RunFileName);
         var appName = "OnDeviceLabelFetcher";
         var packageName = "com.staticcodes.odlf";
 
+        var runScriptPath = Path.Combine(ODLFSubDirectory, RunFileName);
+        var buildScriptPath = Path.Combine(ODLFSubDirectory, BuildFileName);
 
-        // chmod +x build.sh && chmod +x run.sh
-        // Use ./run.sh "OnDeviceLabelFetcher" "com.staticcodes.odlf"
-        var retrievalCommand = $"./{runScriptPath} \"{appName}\" \"{packageName}\"";
-
-        var buildFileNameSet = PermissionHelper.TrySetExecutablePermissions(BuildFileName);
-        PermissionHelper.TrySetExecutablePermissions(RunFileName);
+        var buildFileNameSet = PermissionHelper.TrySetExecutablePermissions(buildScriptPath);
+        var runFileNameSet = PermissionHelper.TrySetExecutablePermissions(runScriptPath);
 
         List<Package> packages = [];
 
         try 
         {
-
-            var result = await Cli.Wrap(CurrentShellPath)
-                .WithArguments([
-                    GetStartingADBArgument(), 
-                    retrievalCommand
-                ])
-                // .WithValidation(CommandResultValidation.None)
-                .ExecuteBufferedAsync(Encoding.UTF8);
+            var result = await Cli.Wrap(runScriptPath)
+                      .WithArguments([appName, packageName])
+                      .WithWorkingDirectory(ODLFSubDirectory)
+                      .WithEnvironmentVariables(env => env.Set("HOME", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)))
+                      // .WithValidation(CommandResultValidation.None)
+                      .ExecuteBufferedAsync(Encoding.UTF8);
 
             if (result.ExitCode != 0) {
+                WriteDebugMessage(result.StandardOutput); 
                 throw new Exception(
                     $"The process associated with GetPackagesWithLabelsAsync() returned a non-zero status code: {result.ExitCode}"
                 );
@@ -511,7 +505,7 @@ public class Device
     /// <summary> 
     ///     Instructs the user to select a package resolution method, then updates Device object's internal package list.
     /// </summary> 
-    public async Task SetInstalledPackages() 
+    public async Task SetInstalledPackagesAsync() 
     {
         WriteInformation("DDSG provides two methods to select your desired package.");
         WriteInformation(
@@ -592,7 +586,7 @@ public class Device
     {
         var isUSB = ConnectionStatus.Method == USB;
 
-        if (isUSB && ConnectionStatus.Connected) {
+        if (isUSB && !ConnectionStatus.Connected) {
             WriteErrorMessage(
                 message: $"No connected devices were detected.\n\n{ConnectionSection}",
                 exit: true,

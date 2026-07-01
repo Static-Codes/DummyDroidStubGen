@@ -52,8 +52,6 @@ public class Generator
         // Populating then writing the three Java source files to disk.
         PopulateSourceFiles(stubInfo.PackageInfo);
         WriteSourceFiles(stubInfo.StubStructure.Directories.JavaCode);
-
-        Environment.Exit(1);
     }
 }
 
