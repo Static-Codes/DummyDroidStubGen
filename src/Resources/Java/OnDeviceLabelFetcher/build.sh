@@ -34,7 +34,7 @@ APK_NAME="$3"
 APP_DATA_DIR="$4"
 
 # The relative path to where the generated class files will reside.
-CLASS_DIR="$PKG_DIR_STRUCTURE/$APP_NAME"
+RELATIVE_CLASS_DIR="$PKG_DIR_STRUCTURE/$APP_NAME"
 # The absolute path to the working directory for this script.
 WORKING_DIR="$APP_DATA_DIR/Resources"
 # The absolute path to the directory containing Java Runtime Executables for the stub.
@@ -43,10 +43,37 @@ JAVA_LIBS_DIR="$WORKING_DIR/libs"
 APP_BUILD_DIR="$WORKING_DIR/$APP_NAME"
 # The absolute path to the Java source for the compiled stub.
 JAVA_SOURCE_DIR="$APP_BUILD_DIR/src/main"
+# The absolute path to the directory containing resource files.
+JAVA_RESOURCE_DIR="$JAVA_SOURCE_DIR/res"
+# The absolute path to the compiled objects for the compiled stub..
+JAVA_OBJECT_DIR="$APP_BUILD_DIR/obj"
+# The absolute path to the directory containing the Android Dex classes for the compiled stub.
+JAVA_DEXOUT_DIR="$APP_BUILD_DIR/dex_out"
+
+# The absolute path to the Debug keystore file that will be used to sign the compiled APK.
+DEBUG_KEYSTORE_PATH="$APP_BUILD_DIR/debug.keystore" 
+# The absolute path to the compiled resources that will be included in the compiled stub.
+COMPILED_RESOURCES_PATH="$APP_BUILD_DIR/compiled_resources.zip"
+# The absolute path to the unaligned APK for the compiled stub.
+UNALIGNED_APK_PATH="$APP_BUILD_DIR/unaligned.apk"
+# The absolute path to the aligned APK for the compiled stub.
+ALIGNED_APK_PATH="$APP_BUILD_DIR/aligned.apk"
+# The absolute path to the final aligned APK for the compiled stub.
+FINAL_APK_PATH="$APP_BUILD_DIR/$APK_NAME"
+# The absolute path to the compiled Android Dex classes.dex.
+ANDROID_DEX_CLASS_PATH="$JAVA_DEXOUT_DIR/classes.dex"
+# The absolute path to the Android Manifest XML file for the compiled stub.
+ANDROID_MANIFEST_PATH="$JAVA_SOURCE_DIR/AndroidManifest.xml"
+
 # The Android 5.0 Lollipop (API 21) Java Runtime
 ANDROID_JAR="$JAVA_LIBS_DIR/android-21.jar"
 # The D8 (R8) runtime to convert Java ByteCode to Android Dex.
 D8_JAR="$JAVA_LIBS_DIR/r8lib.jar"
+
+# The absolute path to the compiled Java class files for the compiled stub.
+JAVA_CLASS_FILES_WILDCARD_PATH="$JAVA_OBJECT_DIR/$RELATIVE_CLASS_DIR*.class"
+# The absolute path to the directory containing the stub's Java source files and a wildcard to represent the files themselves.
+JAVA_FILES_WILDCARD_PATH="$JAVA_SOURCE_DIR/$PKG_DIR_STRUCTURE/*.java"
 
 
 if [ ! -e "$ANDROID_JAR" ] || [ ! -e "$D8_JAR" ]; then
@@ -54,29 +81,29 @@ if [ ! -e "$ANDROID_JAR" ] || [ ! -e "$D8_JAR" ]; then
     exit 1
 fi
 
-cd $APP_BUILD_DIR
+# cd $APP_BUILD_DIR
 
-mkdir -p obj dex_out
+mkdir -p $JAVA_OBJECT_DIR $JAVA_DEXOUT_DIR
 
 printf "%b" "\n[3/16] -> Compiling Resources for $APP_NAME...\n"
 
-aapt2 compile --dir "$JAVA_SOURCE_DIR/res" -o "compiled_resources.zip"
+aapt2 compile --dir "$JAVA_RESOURCE_DIR" -o "$COMPILED_RESOURCES_PATH"
 
 printf "%b" "\n[4/16] -> Linking XML Manifest using aapt2...\n"
 aapt2 link --auto-add-overlay \
-           --manifest $JAVA_SOURCE_DIR/AndroidManifest.xml \
+           --manifest "$ANDROID_MANIFEST_PATH" \
            -I "$ANDROID_JAR" \
-           -R "compiled_resources.zip" \
-           -o "unaligned.apk"
+           -R "$COMPILED_RESOURCES_PATH" \
+           -o "$UNALIGNED_APK_PATH"
 
 printf "%b" "\n[5/16] -> Compiling Java to ByteCode using javac...\n"
-javac -d obj --release 8 -classpath $ANDROID_JAR $JAVA_SOURCE_DIR/"$PKG_DIR_STRUCTURE"/*.java
+javac -d obj --release 8 -classpath $ANDROID_JAR $JAVA_FILES_WILDCARD_PATH
    
 printf "%b" "\n[6/16] -> Converting ByteCode to Android Dex...\n"
-java -cp $D8_JAR com.android.tools.r8.D8 --lib $ANDROID_JAR --release --output dex_out/ obj/$CLASS_DIR*.class
+java -cp $D8_JAR com.android.tools.r8.D8 --lib $ANDROID_JAR --release --output $JAVA_DEXOUT_DIR $JAVA_CLASS_FILES_WILDCARD_PATH
   
 printf "%b" "\n[7/16] -> Packaging Output Dex Classes...\n"
-zip -uj unaligned.apk dex_out/classes.dex
+zip -uj "$UNALIGNED_APK_PATH" "$ANDROID_DEX_CLASS_PATH"
 
 printf "%b" "\n[8/16] -> Aligning APK...\n"
 # -P | Aligns uncompressed .so libraries page size to X KiB chunks.
@@ -89,8 +116,8 @@ printf "%b" "\n[8/16] -> Aligning APK...\n"
 # Maintainers Note:
 # If this project ever requires .so libraries:
 # The next line should be uncommented, and the line below that should commented out.
-# if ! zipalign -P 16 -v 4 unaligned.apk aligned.apk
-if ! zipalign -f -v 4 "unaligned.apk" "aligned.apk"; then
+# if ! zipalign -P 16 -v 4 "$UNALIGNED_APK_PATH" "$ALIGNED_APK_PATH"
+if ! zipalign -f -v 4 "$UNALIGNED_APK_PATH" "$ALIGNED_APK_PATH"; then
     printf "%b" "\nUnable to align compiled APK, please try again.\n" >&2
     exit 1
 fi
@@ -107,8 +134,8 @@ printf "%b" "\n[9/16] -> Confirming Alignment...\n"
 # Maintainers Note:
 # If this project ever requires .so libraries:
 # The next line should be uncommented, and the line below that should commented out.
-# if zipalign -c -P 16 -v 4 aligned.apk; then
-if zipalign -c -v 4 "aligned.apk"; then
+# if zipalign -c -P 16 -v 4 "$ALIGNED_APK_PATH"; then
+if zipalign -c -v 4 "$ALIGNED_APK_PATH"; then
     printf "%b" "\nAlignment Confirmed!"
 else
     printf "%b" "\nIncorrect Alignment Detected!"
@@ -116,24 +143,24 @@ else
 fi
 
 printf "%b" "\n[10/16] -> Removing Unaligned APK..."
-rm -f $APP_BUILD_DIR/unaligned.apk
+rm -f "$UNALIGNED_APK_PATH"
 
 printf "%b" "\n[11/16] -> Signing APK...\n"
-if [ ! -f "$APP_BUILD_DIR/debug.keystore" ]; then
+if [ ! -f "$DEBUG_KEYSTORE_PATH" ]; then
     echo "File debug.keystore not found, generating now." >&2
-    keytool -genkey -v -keystore "$APP_BUILD_DIR/debug.keystore" -storepass android -alias androiddebugkey \
-            -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+    keytool -genkey -v -keystore "$DEBUG_KEYSTORE_PATH" \
+            -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 fi
 
 
-if ! apksigner sign --ks "$APP_BUILD_DIR/debug.keystore" --ks-pass pass:android --in $APP_BUILD_DIR/aligned.apk --out "$APK_NAME"; then
+if ! apksigner sign --ks "$DEBUG_KEYSTORE_PATH" --ks-pass pass:android --in $ALIGNED_APK_PATH --out "$APK_NAME"; then
     echo "Unable to sign the APK.." >&2
     exit 1
 fi
 
 printf "%b" "\n[12/16] -> Removing leftover build artifacts...\n"
-if ! cd $APP_BUILD_DIR && rm -rf "$APK_NAME.idsig" aligned.apk unaligned.apk compiled_resources.zip dex_out obj; then
+if ! rm -rf "$FINAL_APK_PATH.idsig" "$ALIGNED_APK_PATH" "$UNALIGNED_APK_PATH" "$COMPILED_RESOURCES_PATH" "$JAVA_DEXOUT_DIR" "$JAVA_OBJECT_DIR"; then
     echo "Unable to clean all leftover build artifacts.." >&2
     exit 1
 fi
