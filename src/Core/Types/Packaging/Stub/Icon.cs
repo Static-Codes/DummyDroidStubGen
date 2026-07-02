@@ -23,7 +23,7 @@ public class Icon
 {
     /// <summary> 
     ///     A byte array containing the XML contents of the Android DrawableVector to be used as a logo. <br/>
-    ///     This logo will be saved at: path/to/Java/PackageName/src/res/icon.xml
+    ///     This logo will be saved at -> "path/to/Java/PackageName/src/res/icon.OutputFileType"
     /// </summary>
     public byte[] IconBuffer = [];
     public string? InputFilePath;

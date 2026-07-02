@@ -23,10 +23,9 @@ using Core.Extensions;
 using CPU;
 using DummyDroidStubGen.Core.Helpers;
 using Packaging;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Versioning;
 
@@ -464,6 +463,12 @@ public class Device
         }
     }
 
+    public IEnumerable<string> GetMenuOptions(bool usingLabels) 
+    {
+        return usingLabels ? 
+               InstalledThirdPartyPackages.Select(p => p.Label) : 
+               InstalledThirdPartyPackages.Select(p => p.Name);
+    }
 
     /// <summary> 
     ///     Returns "-d" if the device is connected over USB or string.Empty otherwise. 
@@ -575,9 +580,9 @@ public class Device
     /// </summary> 
     public async Task SetInstalledPackagesAsync() 
     {
-        WriteInformation("DDSG provides two methods to select your desired package.");
+        WriteInformation("DDSG provides two methods to select your desired package.\n");
         WriteInformation(
-            coloredText: "Using a package name (com.developer.packagename)", 
+            coloredText: "Using an app name (Requires sideloading OnDeviceLabelFetcher)", 
             textColor: "purple",
             tagName: "[[METHOD 1]]:",
             tagNameColor: "orange",
@@ -585,7 +590,7 @@ public class Device
         );
 
         WriteInformation(
-            coloredText: "Using an app name (Requires sideloading OnDeviceLabelFetcher)", 
+            coloredText: "Using a package name (com.developer.packagename)", 
             textColor: "purple",
             tagName: "[[METHOD 2]]:",
             tagNameColor: "orange",
@@ -609,8 +614,6 @@ public class Device
             }
         );
         
-        WriteWarningMessage("Please implement logic to retrieve packages by label name in Device.cs");
-
         await UpdateInstalledPackages(usingLabels: RetrievalType == PackageRetrievalType.APP_NAME);
     }
 
@@ -644,6 +647,21 @@ public class Device
         SerialNumber = Properties!.GetSerialNumber();
     }
 
+    /// <summary> 
+    ///     Attempts to retrieve a package from InstalledThirdPartyPackages matching the provided name. 
+    /// </summary>
+    public bool TryGetPackageByName(string name, out Package? package) {
+        package = InstalledThirdPartyPackages.Where(p => p.Name == name).FirstOrDefault();
+        return package != null;
+    }
+
+    /// <summary> 
+    ///     Attempts to retrieve a package from InstalledThirdPartyPackages matching the provided label. 
+    /// </summary>
+    public bool TryGetPackageByLabel(string label, [NotNullWhen(true)] out Package? package) {
+        package = InstalledThirdPartyPackages.Where(p => p.Label == label).FirstOrDefault();
+        return package != null;
+    }
 
     /// <summary>
     ///     Sets InstalledThirdPartyPackages for the current device object. <br/>

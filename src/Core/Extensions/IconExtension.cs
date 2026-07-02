@@ -14,10 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
+namespace DummyDroidStubGen.Core.Extensions;
 
+using Types.Packaging;
+using Types.Packaging.Stub;
 using static Global.Messaging;
 using static Helpers.IO.FileHelper;
+
 public static class IconExtension 
 {
     public static void SetBuffer(this Icon iconInfo) 

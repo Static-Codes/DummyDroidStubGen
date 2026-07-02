@@ -70,7 +70,6 @@ public class FileStructure
         }
 
         else if (iconFileType == IconFileType.SVG) {
-            // return (converted: true, conversionPath: "");
             throw new NotImplementedException("Please implement me before committing");
         }
 

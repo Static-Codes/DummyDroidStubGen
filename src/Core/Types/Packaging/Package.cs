@@ -40,7 +40,7 @@ public class Package(string name, PackageCategory category, string? label = null
 
     /// <summary> The application name displayed on the label text. </summary>
     [JsonPropertyName("label")]
-    public string Label { get; init; } = GetFriendlyName(label, name, category);
+    public string Label { get; set; } = GetFriendlyName(label, name, category);
 
     /// <summary> The Base Code Path to the APK associated with the current package. </summary>
     public string? BaseCodePath { get; init; } = baseCodePath;
