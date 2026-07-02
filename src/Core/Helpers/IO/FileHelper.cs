@@ -4,6 +4,7 @@ using static Global.Messaging;
 using static Global.Constants;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using static System.Environment;
 
 public static class FileHelper 
 {
@@ -186,7 +187,7 @@ public static class FileHelper
                     reverse: true
                 );
 
-                Environment.Exit(1);
+                Exit(1);
             }
 
             WriteSuccessMessage($"Extracted archive to: {inputArchive.OutputSubDirectory}");
@@ -260,7 +261,7 @@ public static class FileHelper
     {
         string? appDataPath;
         try {
-            appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            appDataPath = GetFolderPath(SpecialFolder.ApplicationData);
         }
         catch (Exception ex) {
             WriteWarningMessage("An exception has occured while attempting to retrieve the AppData directory on the current system.");
@@ -270,7 +271,7 @@ public static class FileHelper
         return appDataPath;
     }
 
-
+    public static string GetUserProfileDirectory() => GetFolderPath(SpecialFolder.UserProfile);
 
     /// <summary>
     ///     Attempts to output a stream object by calling GetManifestResourceStream() using the specified resourcePath.

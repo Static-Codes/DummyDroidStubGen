@@ -26,6 +26,7 @@ using Packaging;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Versioning;
 
@@ -33,6 +34,7 @@ using Versioning;
 using static ADB.Connection;
 using static ADB.Connection.ConnectionMethod;
 using static Common.InputValidation;
+using static Common.RegexPatterns;
 using static Functions;
 using static Global.Constants;
 using static Global.Messaging;
@@ -110,9 +112,12 @@ public class Device
     /// <summary> The internal codename associated with the current Android Device. </summary>
     public string Codename { get; set; }
 
+    public UserProfile[] UserProfiles { get; set; }
+    public bool HasWorkProfileConfigured { get; set; }
+
 
     /// <summary> This is the normal constructor which will be used for object creation. </summary>
-    public Device(string? name = null, AndroidOSVersion? androidOSVersion = null, ConnectionStatus? connectionStatus = null, ConnectionMethod? connectionMethod = null, PairingInfo? wirelessPairingInfo = null, string? id = null, string? serialNumber = null, string? codename = null)
+    public Device(string? name = null, AndroidOSVersion? androidOSVersion = null, ConnectionStatus? connectionStatus = null, ConnectionMethod? connectionMethod = null, PairingInfo? wirelessPairingInfo = null, string? id = null, string? serialNumber = null, string? codename = null, UserProfile[]? userProfiles = null)
     {
         Name = name ?? "Unknown";
         AndroidOSVersion = androidOSVersion ?? AndroidOSVersion.UNKNOWN;
@@ -130,6 +135,7 @@ public class Device
 
         SerialNumber = serialNumber ?? "Unknown";
         Codename = codename ?? "Unknown";
+        UserProfiles = userProfiles ?? [];
     }
 
     /// <summary>
@@ -138,7 +144,7 @@ public class Device
     /// </summary>
 
     [JsonConstructor]
-    public Device(string? Name, ConnectionStatus? ConnectionStatus = null, AndroidOSVersion? androidOSVersion = null, ConnectionMethod? ConnectionMethod = null, PairingInfo? WirelessPairingInfo = null, string? ID = null, string? SerialNumber = null, string? Codename = null)
+    public Device(string? Name, ConnectionStatus? ConnectionStatus = null, AndroidOSVersion? androidOSVersion = null, ConnectionMethod? ConnectionMethod = null, PairingInfo? WirelessPairingInfo = null, string? ID = null, string? SerialNumber = null, string? Codename = null, UserProfile[]? UserProfiles = null)
     {
         var defaultValue = "Unknown";
         
@@ -158,6 +164,8 @@ public class Device
         this.SerialNumber = SerialNumber ?? defaultValue;
 
         this.Codename = Codename ?? defaultValue;
+
+        this.UserProfiles = UserProfiles ?? [];
     }
 
 
@@ -338,6 +346,7 @@ public class Device
         return packages;
     }
 
+
     /// <summary>
     ///     Uses the current device's PackageManager to return a list of packages and their base APK code paths. <br/>
     ///     
@@ -361,8 +370,7 @@ public class Device
             var result = await Cli.Wrap(runScriptPath)
                       .WithArguments([appName, packageName])
                       .WithWorkingDirectory(ODLFSubDirectory)
-                      .WithEnvironmentVariables(env => env.Set("HOME", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)))
-                      // .WithValidation(CommandResultValidation.None)
+                      .WithEnvironmentVariables(env => env.Set("HOME", GetUserProfileDirectory()))
                       .ExecuteBufferedAsync(Encoding.UTF8);
 
             if (result.ExitCode != 0) {
@@ -372,16 +380,24 @@ public class Device
                 );
             }
             
-            #if DEBUG
-                WriteDebugMessage(result.StandardOutput); 
-            #endif
+            // #if DEBUG
+            //     WriteDebugMessage(result.StandardOutput); 
+            // #endif
 
-            var sanitizedResults = result.StandardOutput.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)[1..];
+            var rawResults = result.StandardOutput.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
+                                                        .Where(line => line.Contains('|'))
+                                                        .ToArray();
+
+
+            // Skipping the first element which is "Label"
+            string[] sanitizedResults = rawResults[1..rawResults.Length];
             
             foreach (var line in sanitizedResults) 
             {
                 var parts = line.Split('|');
-                if (parts.Length >= 2) 
+
+                // Skipping invalid entries or the OnDeviceLabelFetcher itself.
+                if (parts.Length >= 2 && parts[0] != "OnDeviceLabelFetcher") 
                 {
                     packages.Add(new Package(
                         name: parts[0], 
@@ -398,6 +414,33 @@ public class Device
         }
 
         return packages;
+    }
+
+
+    /// <summary> Returns an array of profiles that were located on the current device. </summary> 
+    private async Task<UserProfile[]> GetProfilesOnCurrentDevice() 
+    {
+        var psi = DeviceProfilesPSI(isUSB: ConnectionStatus.Method == USB);
+        
+        try {
+            var result = await RunProcessAsync(psi);
+            var matches = result.Output.Select(line => UserHandleRegex().Match(line));
+            var matchCount = matches.Count();
+            var sanitizedMatches = matches.Skip(1);
+
+            matches = null;
+            matchCount = 0;
+            
+            if (!sanitizedMatches.Any()) { return []; }
+
+            return [.. sanitizedMatches.Select(match => UserProfile.New(match))];
+        }
+
+        catch (Exception ex) {
+            WriteWarningMessage("Unable to query the user profiles on the current device using pm.");
+            WriteErrorMessage(ex.Message);
+            return [];
+        }
     }
 
 
@@ -489,6 +532,10 @@ public class Device
         ProcessorArchitecture = Properties!.GetCPUArchitecture();
     }
 
+    /// <summary> Calls GetProfilesOnCurrentDevice() and assings the value to UserProfiles. </summary>
+    public async Task SetUserProfiles() {
+        UserProfiles = await GetProfilesOnCurrentDevice();
+    }
 
     /// <summary> 
     ///     Attempts to parse the Android OS Version from the provided DeviceProperties object. <br/>

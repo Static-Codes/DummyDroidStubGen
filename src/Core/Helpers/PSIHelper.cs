@@ -66,14 +66,12 @@ public class PSIHelper
     }
 
     /// <summary> Executes: adb connect {ip}:{port} </summary>
-    public static ProcessStartInfo DeviceConnectionPSI(string ipAddress, string port) 
-    {
+    public static ProcessStartInfo DeviceConnectionPSI(string ipAddress, string port) {
         return CreateADBShellCommandPSI(command: $"connect {ipAddress}:{port}", isUSB: false);
     }
 
 
-    public static ProcessStartInfo DevicePairingPSI(string ipAddress, string port, string code) 
-    {
+    public static ProcessStartInfo DevicePairingPSI(string ipAddress, string port, string code) {
         return new() {
             FileName = "/bin/bash",
             Arguments = $"-c \"echo {code} | adb pair {ipAddress}:{port}\"",
@@ -83,7 +81,11 @@ public class PSIHelper
             CreateNoWindow = true
         };
     }
-
+    
+    /// <summary> Executes: adb shell pm list users </summary>
+    public static ProcessStartInfo DeviceProfilesPSI(bool isUSB) {
+        return CreateADBShellCommandPSI(command: "pm list users", isUSB);
+    }
 
     /// <summary> Executes: adb shell getprop </summary>
     public static ProcessStartInfo DevicePropertiesPSI(bool isUSB) {
