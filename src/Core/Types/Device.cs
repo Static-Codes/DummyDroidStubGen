@@ -50,52 +50,44 @@ public class Device
     /// </summary>
     public string Name { get; set; }
 
-
     /// <summary> 
     ///     The version of the Android OS running on the specified device.
     /// </summary>
     public AndroidOSVersion AndroidOSVersion { get; set; } = AndroidOSVersion.UNKNOWN;
-
 
     /// <summary> 
     ///     The version of the Android API that was bundled with the version of Android running on the specified device.
     /// </summary>
     public int AndroidAPILevel { get; set; } = (int)AndroidOSVersion.UNKNOWN;
 
-
     /// <summary> 
     ///     Holds internal state data that is used to identify if a device is connected to adb. 
     /// </summary>
     public ConnectionStatus ConnectionStatus { get; set; }
-
 
     /// <summary> 
     ///     Holds the Device IP, Pairing Port, and Pairing Code. (If WIFI pairing is used.) 
     /// </summary>
     public PairingInfo? WirelessPairingInfo { get; set; }
 
-
     /// <summary> 
     ///     A DeviceProperties object containing the results of `adb shell getprops` 
     /// </summary>
     public DeviceProperties? Properties { get; set; }
 
-
     /// <summary> The architecture of the current device's CPU. </summary>
     public CPUArchitecture ProcessorArchitecture { get; set; } = CPUArchitecture.UNKNOWN;
     
-
     /// <summary> The page size supported by the device's CPU </summary>
     private CPUPageSize PageSize { get; set; } = CPUPageSize.UNKNOWN;
-
 
     /// <summary> If the device has a CPU that supports 16 kilobyte page sizes. </summary>
     public bool PageSizeIs16KB { get; set; }
 
-
     /// <summary> A list containing a list of package objects for non-system services. </summary>
     public List<Package> InstalledThirdPartyPackages { get; set; } = [];
 
+    /// <summary> The retrieval type to be used to populate InstalledThirdPartyPackages. </summary>
     public PackageRetrievalType RetrievalType { get; set; } = PackageRetrievalType.UNSET;
 
     /// <summary> 
@@ -108,11 +100,13 @@ public class Device
     /// <summary> The serial number of the connected Android device. </summary>
     public string? SerialNumber { get; set; }
 
-
     /// <summary> The internal codename associated with the current Android Device. </summary>
     public string Codename { get; set; }
 
+    /// <summary> An array of UserProfile objects representing each of the profiles on the current device. </summary>
     public UserProfile[] UserProfiles { get; set; }
+
+    /// <summary> If the current device has a work profile (or sandbox) configured. </summary>
     public bool HasWorkProfileConfigured { get; set; }
 
 
@@ -169,6 +163,16 @@ public class Device
     }
 
 
+    private const string odlfAppName = "OnDeviceLabelFetcher";
+    private const string odlfPackageName = "com.staticcodes.odlf";
+    
+    /// <summary> Adds a package to the list of packages passed as a reference parameter. </summary>
+    private static void AddPackage(ref List<Package> packages, string name, string? label = null, string? baseCodePath = null, bool isManaged = false) {
+        packages.Add(
+            new Package(name, PackageCategory.Commercial, label, baseCodePath, isManaged)
+        );
+    }
+
     /// <summary> Uses a StringBuilder to create the command that will be executed in GetPackagesAsync() </summary>
     private static string BuildRetrievalCommand() 
     {
@@ -193,7 +197,6 @@ public class Device
             
             .ToString();
     }
-
 
 
     /// <summary>
@@ -327,14 +330,25 @@ public class Device
             foreach (var line in sanitizedResults) 
             {
                 var parts = line.Split('|');
-                if (parts.Length >= 2) 
-                {
-                    packages.Add(new Package(
-                        name: parts[0], 
-                        category: PackageCategory.Commercial,
-                        baseCodePath: parts[1]
-                    ));
+
+                // Skipping invalid entries or the OnDeviceLabelFetcher itself.
+                if (parts.Length < 2 || parts[1] == odlfPackageName) {
+                    continue;
                 }
+
+                // If the located packages already contains an entry for the current package, the current one is sandboxed.
+                if (packages.Any(package => package.Label == parts[0]))
+                {
+                    AddPackage(
+                        ref packages, 
+                        name: $"{parts[0]} (Sandboxed)",
+                        baseCodePath: parts[1],
+                        isManaged: true
+                    );
+                    continue;
+                }
+
+                AddPackage(ref packages, name: parts[0], baseCodePath: parts[1]);
             }
         }
 
@@ -354,8 +368,6 @@ public class Device
     /// </summary>
     private static async Task<List<Package>> GetPackagesWithLabelsAsync() 
     {
-        var appName = "OnDeviceLabelFetcher";
-        var packageName = "com.staticcodes.odlf";
 
         var runScriptPath = Path.Combine(ODLFSubDirectory, RunFileName);
         var buildScriptPath = Path.Combine(ODLFSubDirectory, BuildFileName);
@@ -368,7 +380,7 @@ public class Device
         try 
         {
             var result = await Cli.Wrap(runScriptPath)
-                      .WithArguments([appName, packageName])
+                      .WithArguments([odlfAppName, odlfPackageName])
                       .WithWorkingDirectory(ODLFSubDirectory)
                       .WithEnvironmentVariables(env => env.Set("HOME", GetUserProfileDirectory()))
                       .ExecuteBufferedAsync(Encoding.UTF8);
@@ -397,14 +409,23 @@ public class Device
                 var parts = line.Split('|');
 
                 // Skipping invalid entries or the OnDeviceLabelFetcher itself.
-                if (parts.Length >= 2 && parts[0] != "OnDeviceLabelFetcher") 
-                {
-                    packages.Add(new Package(
-                        name: parts[0], 
-                        category: PackageCategory.Commercial,
-                        label: parts[1]
-                    ));
+                if (parts.Length < 2 || parts[1] == odlfAppName) {
+                    continue;
                 }
+
+                // If the located packages already contains an entry for the current app label, its likely sandboxed.
+                if (packages.Any(package => package.Label == parts[1]))
+                {
+                    AddPackage(
+                        ref packages, 
+                        name: parts[0], 
+                        label: $"{parts[1]} (Sandboxed)",
+                        isManaged: true
+                    );
+                    continue;
+                }
+
+                AddPackage(ref packages, name: parts[0], label: parts[1]);
             }
         }
 

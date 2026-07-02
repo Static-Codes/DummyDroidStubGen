@@ -24,29 +24,29 @@ using static DummyDroidStubGen.Core.Helpers.NetworkHelper;
 using static DummyDroidStubGen.Core.Helpers.PackageHelpers;
 using static DummyDroidStubGen.Global.Messaging;
 
-public class Package(string name, PackageCategory category, string? label = null, string? baseCodePath = null)
+public class Package(string name, PackageCategory category, string? label = null, string? baseCodePath = null, bool isManaged = false)
 {
     [JsonPropertyName("name")]
+    /// <summary> The identifier for the current package. </summary>
     public string Name { get; init; } = name;
 
-    
     [JsonPropertyName("category")]
-
     // Handles the conversion of a category string to its enum member.
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    
     // Setting the default value if the conversion fails.
     [DefaultValue(PackageCategory.Other)]
+    /// <summary> The category for the current package. </summary>
     public PackageCategory Category { get; init; } = category;
 
-    /// <summary> The Base Code Path to the APK associated with the current package. </summary>
-    public string? BaseCodePath { get; init; }= baseCodePath;
-
-
-
+    /// <summary> The application name displayed on the label text. </summary>
     [JsonPropertyName("label")]
     public string Label { get; init; } = GetFriendlyName(label, name, category);
 
+    /// <summary> The Base Code Path to the APK associated with the current package. </summary>
+    public string? BaseCodePath { get; init; } = baseCodePath;
+    
+    /// <summary> If the Package is managed or sandboxed. </summary>
+    public bool IsManaged { get; set; } = isManaged;
 
     /// <summary>
     ///     Returns a List of blacklisted packages that will be used in GetWhitelistedPackages().
@@ -153,11 +153,16 @@ public class Package(string name, PackageCategory category, string? label = null
     }
 }
 
+/// <summary> An enum representing the category associated with a Package object. </summary>
 public enum PackageCategory { Application = 0, Commercial = 1, Developer = 2, Organization = 3, System = 4, Other = 5 }
+
+/// A class representing the parts of the current package's Name field.
 public class PackageNameParts(string[] PartsArray)
 {
     public string PackageType = PartsArray[0];
     public string DeveloperName = PartsArray[1];
     public string AppName = PartsArray[2];
 };
-public enum PackageRetrievalType { UNSET = -1, APP_NAME = 0, PACKAGE_NAME = 1 }
+
+/// <summary> An enum representing the Retrieval Type chosen by the user. </summary>
+public enum PackageRetrievalType { UNSET = 0, APP_NAME = 1, PACKAGE_NAME = 2 }
