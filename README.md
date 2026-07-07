@@ -45,8 +45,5 @@ Click [here](./FAQ.md) to see the dedicated FAQ page
 With the release of Lawnchair 15 Beta, the entire codebase was reworked.
 This reworking affected more than just gesture controls, however, these other changes aren't relevant to **DDSG**.
 
-For more information on the changes from Lawnchair 14 and Lawnchair 15, see:
-> - [Beta 1](https://github.com/LawnchairLauncher/lawnchair/releases/tag/v15.0.0-beta1) 
-> - [Beta 2](https://github.com/LawnchairLauncher/lawnchair/releases/tag/v15.0.0-beta2)
-> - [Beta 2.1](https://github.com/LawnchairLauncher/lawnchair/releases/tag/v15.0.0-beta2.1) 
-> - [Beta 3.0](https://github.com/LawnchairLauncher/lawnchair/releases/tag/v15.0.0-beta3.0) 
+For more information on the changes from Lawnchair 14 and Lawnchair 15, click [here](./BACKSTORY.md)
+
