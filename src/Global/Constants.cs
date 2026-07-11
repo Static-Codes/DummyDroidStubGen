@@ -53,6 +53,8 @@ internal class Constants
     public const string OrangeHex = "#FFAF00";
     public const string LiveEnvironmentLink = "https://github.com/Static-Codes/DummyDroidStubGen/tree/main/LIVE-ENV.MD";
     public const string ProjectIssueLink = "https://github.com/Static-Codes/DummyDroidStubGen/issues";
+    public const string VDToolForkLink = "https://github.com/Static-Codes/vd-tool";
+    public const string VDToolBuilderLink = "https://github.com/Static-Codes/vd-tool-builder";
 
 
 }

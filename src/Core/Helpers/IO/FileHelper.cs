@@ -46,6 +46,18 @@ public static class FileHelper
     public static readonly string LibrariesSubDirectory = Path.Combine(ResourcesSubDirectory, "libs");
 
     /// <summary>
+    ///     The subdirectory where DDSG will write the optional VDTool binary.
+    /// </summary>
+    public static readonly string VDToolSubDirectory = Path.Combine(ResourcesSubDirectory, "vdtool");
+
+    /// <summary> The path to the zip file containing the VDTool binary. </summary>
+    public static readonly string VDToolZipPath = Path.Combine(VDToolSubDirectory, "vdtool.zip");
+
+
+    /// <summary> The absolute path to the VDTool binary. </summary>
+    public static readonly string VDToolBinaryPath = Path.Combine(VDToolSubDirectory, "vdtool-wrapper");
+
+    /// <summary>
     ///     The path to the Android SDK that will be written to disk during the compilation process. <br/>
     ///     This JAR will then be called by aapt2 link during the execution of build.sh
     /// </summary> 
@@ -349,4 +361,22 @@ public static class FileHelper
         }
     }
 
+    public static bool VDToolIsDownloaded()
+    {
+        string[] files = [ 
+            "libawt.so", "libawt_headless.so", "libawt_xawt.so", "libfontmanager.so", "libjava.so",
+            "libjavajpeg.so", "libjvm.so", "liblcms.so", "libmlib_image.so", "vdtool-wrapper" 
+        ];
+
+        static string GetAbsolutePath(string file) => Path.Combine(VDToolSubDirectory, file); 
+
+        foreach (var file in files) 
+        {
+            if (!Path.Exists(GetAbsolutePath(file))){
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
