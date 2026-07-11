@@ -17,7 +17,15 @@
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
 using Core.Extensions;
+using DummyDroidStubGen.Core.Helpers;
+using System.Diagnostics;
+using System.Text;
+
+using static Functions;
+using static Global.Constants;
 using static Global.Messaging;
+using static Helpers.IO.FileHelper;
+using static Helpers.IO.InputHelper;
 using static FileStructure.NonNativeIconConversionStatus;
 
 public class FileStructure 
@@ -56,7 +64,7 @@ public class FileStructure
     /// A boolean detailing if the file contents was converted. <br/> 
     /// A nullable string that will either be null or contain the path to the converted file.
     /// </summary>
-    public static NonNativeIconResponse HandleNonNativeIconFormats(IconFileType iconFileType) 
+    public static async Task<NonNativeIconResponse> HandleNonNativeIconFormats(IconFileType iconFileType, string inputSVGPath) 
     {
         WriteWarningMessage("Please implement SVG to Android Drawable Conversion in FileStructure.cs");
         
@@ -69,8 +77,17 @@ public class FileStructure
             );
         }
 
-        else if (iconFileType == IconFileType.SVG) {
-            throw new NotImplementedException("Please implement me before committing");
+        else if (iconFileType == IconFileType.SVG) 
+        {
+            var path = await ProcessSVGConversion(inputSVGPath);
+            return new NonNativeIconResponse(
+                Conversion: new NonNativeIconConversion(
+                    Required: true,
+                    Occurred: true,
+                    Path: path
+                ),
+                Status: SUCCESS
+            );
         }
 
         return new NonNativeIconResponse
@@ -83,9 +100,8 @@ public class FileStructure
         );
     }
 
-
     /// <summary> Creates a new instance of FileStructure for the current stub. </summary>
-    public static FileStructure New(string ProjectDirectory, string PackageName, string InputIconPath) 
+    public static async Task<FileStructure> New(string ProjectDirectory, string PackageName, string InputIconPath) 
     {
 
         if (!Directory.Exists(ProjectDirectory)) {
@@ -103,9 +119,9 @@ public class FileStructure
         string? iconFileExt = null;
         var iconFileType = InputIconPath.ToIconFileType(ref iconFileExt);
 
-        (var Conversion, var Status) = HandleNonNativeIconFormats(iconFileType); 
+        var iconResponse = await HandleNonNativeIconFormats(iconFileType, InputIconPath); 
         
-        if (Conversion.Required && !Conversion.Occurred || Status == FAILURE) {
+        if (iconResponse.Conversion.Required && !iconResponse.Conversion.Occurred || iconResponse.Status == FAILURE) {
             WriteWarningMessage("Icon file conversion failed.");
             WriteErrorMessage("The conversion either didnt occur, or failed.", exit: true, exitCode: 1);
         }
@@ -148,7 +164,10 @@ public class FileStructure
         var manifestFilePath = Path.Combine(mainSourceDir, "AndroidManifest.xml");
     
         // Creating <ProjectDirectory>/src/main/res/<icon>.xml
-        var iconFilePath = Path.Combine(stubProjectDirectories.Drawables, iconFileName);
+        var iconFilePath = iconResponse.Conversion.Occurred && iconResponse.Conversion.Path != null ?
+                                       Path.Combine(stubProjectDirectories.Drawables, iconResponse.Conversion.Path) : 
+                                       Path.Combine(stubProjectDirectories.Drawables, iconFileName); 
+                                        
         var iconInfo = new Icon(InputIconPath, iconFilePath);
 
         return new() {
@@ -156,6 +175,115 @@ public class FileStructure
             Icon = iconInfo,
             ManifestFilePath = manifestFilePath,
         };
+    }
+
+    private static async Task<string?> ProcessSVGConversion(string inputSVGPath) 
+    {
+        WriteInformation("You have selected an SVG file, this needs to be converted to Android's VectorDrawable format.");
+        WriteInformation("This process involves downloading a standalone application known as VDToolWrapper.\n");
+
+        var learnMoreChoice = AskForSelection("Would you like to learn more about how this application work?",  ["Yes", "No"]);
+
+        if (learnMoreChoice.IsExitOption()) { Environment.Exit(1); }
+
+        else if (learnMoreChoice is "Yes") {
+            WriteInformation("VDToolWrapper was compiled from VectorDrawableCliTool using a fork of Ryan Harter's VDTool.");
+            WriteInformation(coloredText: $"VD Tool\n\t{VDToolForkLink}", tagName: "[[LINK]]: ", tagNameColor: "orange");
+            WriteInformation(coloredText: $"VD Tool Builder\n\t{VDToolBuilderLink}\n", tagName: "[[LINK]]: ", tagNameColor: "orange");
+        }
+
+        WriteInformation("VDTool requires an additional 160MB of disk space for the download and extraction process.");
+
+        var continueChoice = AskForSelection("Would you like to continue?", ["Yes", "No"]);
+        
+        if (continueChoice.IsExitOption() || continueChoice is "No") { Environment.Exit(1); }
+
+        // Checking if VDTool is already downloaded.
+        var vdToolDownloaded = VDToolIsDownloaded();
+        
+        // If not already downloaded, an attempt is made to download the VDTool archive.
+        if (!vdToolDownloaded && await DownloadHelper.DownloadVDToolArchive()) { vdToolDownloaded = true; }
+
+        // If the archive is still missing, an error will displayed by DownloadVDToolArchive() and execution ends. 
+        if (!vdToolDownloaded) { Environment.Exit(1); }
+        
+        var conversionDirectory = await RunVDToolWrapper(inputSVGPath);
+
+        string? convertedFilePath = null;
+
+        try {
+            convertedFilePath = Directory.GetFiles(conversionDirectory).FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            WriteWarningMessage("An exception has occured while reading the contents of the converted file.");
+            #if DEBUG
+                WriteErrorMessage(ex.StackTrace ?? ex.Message, exit: true, exitCode: 1);
+            #else
+                WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+            #endif
+        }
+        return convertedFilePath;
+    }
+
+    /// <summary> Executes the VD Tool Wrapper. </summary>
+    /// <param name="inputSVGPath">The absolute path to the SVG file to be converted.</param>
+    /// <returns>The absolute path to the temporary directory containing the conversion result. </returns>
+    private static async Task<string> RunVDToolWrapper(string inputSVGPath)
+    {
+        // At this point, the archive will have been extracted and it's contents were verified to be on disk.
+        DirectoryInfo? tmpDir = null; 
+        
+        try { tmpDir = Directory.CreateTempSubdirectory(); }
+        catch (Exception ex)
+        {
+            WriteWarningMessage("An exception has occured while creating a temporary output directory");
+            #if DEBUG
+                WriteErrorMessage(ex.StackTrace ?? ex.Message, exit: true, exitCode: 1);
+            #else
+                WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+            #endif
+        }
+
+        var psi = new ProcessStartInfo()
+        {
+            FileName = VDToolBinaryPath,
+            // Argument Breakdown
+            // -c | Specifies that the wrapper should convert the contents of the input SVG.
+            // -in | Specifies that the next argument will be the input SVG.
+            // -out | Specifies that the next argument will be the output directory.
+            Arguments = $"-c -in \"{inputSVGPath}\" -out \"{tmpDir.FullName}\"",
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+
+            // This is likely unneccessary as glibc handles both UTF8 and UTF16 string marshalling.
+            StandardOutputEncoding = Encoding.UTF8,
+        };
+
+        DataReceivedEventHandler? inputHandler = null;
+        DataReceivedEventHandler? outputHandler = null;
+
+        try {
+            var process = await RunProcessAsync(psi, inputArg: null, inputHandler, outputHandler);
+            
+            // If the execution did not fail, no logging is required.
+            if (process.ExitCode == 0) { return tmpDir.FullName; }
+
+            // At this point it's confirmed the execution has failed, and the user will be notified why.
+            WriteWarningMessage("An error has occured while trying to execute the VDTool-Wrapper.");
+            foreach (var error in process.Error) { WriteErrorMessage(error); }
+            
+            throw process.Exception ?? new("No additional data was reported from the wrapper.");
+        }
+
+        catch (Exception ex)
+        {
+            var exc = ex;
+            throw exc;
+        }
+
     }
 
 }
