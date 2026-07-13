@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="CliWrap" Version="3.10.2" />
+    <PackageReference Include="NativeFileDialogSharp" Version="0.6.0-alpha" />
     <PackageReference Include="Spectre.Console" Version="0.55.2" />
     <!-- EventLogger is currently unused -->
     <!-- <PackageReference Include="NReco.Logging.File" Version="1.3.1" /> -->
@@ -21,7 +22,7 @@
 
   <!-- EventLogger is current unused -->
   <ItemGroup>
-    <Compile Remove="Global/Logging.cs"/>
+    <Compile Remove="Global/Logging.cs" />
   </ItemGroup>
 
   <!--  https://learn.microsoft.com/en-us/visualstudio/msbuild/assigntargetpath-task?view=visualstudio -->
@@ -33,14 +34,10 @@
     <RemoveDir Directories="Resources/Java/OnDeviceLabelFetcher/obj" />
     
     <!-- Compressing Resources/Java/lib to a zip archive. -->
-    <ZipDirectory Overwrite="true" 
-                  SourceDirectory="Resources/Java/lib" 
-                  DestinationFile="$(MSBuildProjectDirectory)/Resources/libs.zip" />
+    <ZipDirectory Overwrite="true" SourceDirectory="Resources/Java/lib" DestinationFile="$(MSBuildProjectDirectory)/Resources/libs.zip" />
 
     <!-- Compressing Resources/Java/OnDeviceLabelFetcher to a zip archive. -->
-    <ZipDirectory Overwrite="true" 
-                  SourceDirectory="Resources/Java/OnDeviceLabelFetcher" 
-                  DestinationFile="$(MSBuildProjectDirectory)/Resources/odlf.zip" />
+    <ZipDirectory Overwrite="true" SourceDirectory="Resources/Java/OnDeviceLabelFetcher" DestinationFile="$(MSBuildProjectDirectory)/Resources/odlf.zip" />
     
     <!-- Embedding Required App Resources. -->
     <!-- Logical Name is used here to ensure both debug and release builds point to the right resource path. -->
@@ -57,7 +54,7 @@
         <LogicalName>Resources.Security.blacklist.json</LogicalName>
       </EmbeddedResource>
 
-      <EmbeddedResource Include="Resources/Android/DrawableVectors/*.xml"/>
+      <EmbeddedResource Include="Resources/Android/DrawableVectors/*.xml" />
     </ItemGroup>
 
   </Target>

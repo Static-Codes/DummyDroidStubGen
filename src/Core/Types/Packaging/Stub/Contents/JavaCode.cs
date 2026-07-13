@@ -210,7 +210,7 @@ public class JavaCode
         WriteMainActivityOpenPackage(ref javaFile, ref tabs);
         WriteMainActivityNotices(ref javaFile, ref tabs);
 
-        RunDebugIfActive(javaFile);
+        // RunDebugIfActive(javaFile);
 
 
     }
@@ -277,7 +277,7 @@ public class JavaCode
         javaFile.AddClosingBracket(tabs: 1);
         javaFile.AddClosingBracket();
         
-        RunDebugIfActive(javaFile);
+        // RunDebugIfActive(javaFile);
         
     }
     

@@ -119,8 +119,7 @@ public class ShellCode
 
         WriteBuildScriptCleanupBlock(shellFile, ref tabs);
 
-        RunDebugIfActive(shellFile);
-        Environment.Exit(1);
+        // RunDebugIfActive(shellFile);
     }
 
 
@@ -172,8 +171,7 @@ public class ShellCode
         shellFile.AddSleepCommand(seconds: 1, tabs);
 
 
-        RunDebugIfActive(shellFile);
-        Environment.Exit(1);
+        // RunDebugIfActive(shellFile);
     }
 
 

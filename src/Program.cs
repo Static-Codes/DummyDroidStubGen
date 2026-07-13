@@ -16,25 +16,28 @@
 */
 
 using DummyDroidStubGen.Core.Types;
+using DummyDroidStubGen.Core.Types.Packaging;
+using DummyDroidStubGen.Core.Types.Packaging.Stub;
+using System.IO.Compression;
 using static DummyDroidStubGen.Core.Common.InstallationChecks;
+using static DummyDroidStubGen.Core.Common.RegexPatterns;
 using static DummyDroidStubGen.Core.Helpers.IO.FileHelper;
+using static DummyDroidStubGen.Core.Helpers.IO.InputHelper;
 using static DummyDroidStubGen.Core.Types.ADB.Connection;
+using static DummyDroidStubGen.Core.Types.Packaging.PackageRetrievalType;
 using static DummyDroidStubGen.Functions;
+using static DummyDroidStubGen.Global.Constants;
 using static DummyDroidStubGen.Global.Messaging;
+using static NativeFileDialogSharp.Dialog;
+using static System.OperatingSystem;
 
 
-// using System.Reflection;
-// using DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
-// using DummyDroidStubGen.Core.Types.Packaging;
-// using DummyDroidStubGen.Core.Types.Packaging.Stub;
-// var sfs = StubFileStructure.Create("/home/nerdy/.config/DummyDroidStubGen/Resources/", "my.test.package", "Resources/Android/DrawableVectors/cyclone.xml");
-// Console.WriteLine(sfs.JavaCodeDir);
-// var package = new Package("my.test.package", PackageCategory.Commercial, "MyTestPackage");
-
-// AndroidManifest manifest = new(sfs, package);
-// manifest.Write();
-
-// Environment.Exit(1);
+if (!IsLinux() && !IsFreeBSD()) {
+    WriteWarningMessage("DDSG only supports Linux.");
+    WriteInformation("You can run a live environment like Debian or Mint, without installing Linux.");
+    WriteInformation($"For more information see: {LiveEnvironmentLink}");
+    Environment.Exit(1);
+}
 
 var binaryCheckResults = CheckForRequiredBinaries();
 
@@ -80,19 +83,114 @@ await devicePropertiesObj.LoadAsync(device);
 // Frees the memory associated with devicePropertiesObj
 device.UpdateProperties(ref devicePropertiesObj);
 
+await device.SetUserProfiles();
+
+
 // Has the user choose a package retrievel method, either:
 // 1. PackageRetrievalType.APP_NAME
 // 2. PackageRetrievalType.PACKAGE_NAME
 // The selected retrieval method is used to return a list of installed packages.
-device.SetInstalledPackages();
-
+await device.SetInstalledPackagesAsync();
 
 
 WriteInformation("Preparing build info menu..");
-Thread.Sleep(1500);
 
-// foreach (var package in device.InstalledThirdPartyPackages) {
-//     Console.WriteLine(package.Name);
-// }
+// #if DEBUG
+//     foreach (var thirdPartyPackage in device.InstalledThirdPartyPackages) {
+//         Console.WriteLine(thirdPartyPackage.Label);
+//     }
+// #endif
 
-// var desiredPackage = new Package(desiredPackageName, PackageCategory.Application, desiredPackageLabel);
+var usingLabels = device.RetrievalType is APP_NAME;
+
+var packageSelection = AskForSelection(
+    message: "Please select the application you wish to be launched by the compiled stub.",
+    options: device.GetMenuOptions(usingLabels)
+);
+
+Package? package;
+string? ProjectName;
+
+var resolutionSuccess = usingLabels switch {
+    true  => device.TryGetPackageByLabel(packageSelection, out package),
+    false => device.TryGetPackageByName(packageSelection, out package),
+};
+
+if (!resolutionSuccess) {
+    WriteErrorMessage("Failed to resolve the package you selected.");
+    WriteInformation($"This is likely a bug, please make a bug report at: {ProjectIssueLink}");
+}
+
+if (package!.Label is null || package.Label is "Unknown") {
+    var rawPackageName = AskForInput("Please enter your desired name for the compiled stub: ");
+    ProjectName = PackageSanitizationRegex().Replace(input: rawPackageName, replacement: "");
+    package.Label = ProjectName;
+} else {
+    ProjectName = PackageSanitizationRegex().Replace(input: package.Label, replacement: "") + "Launcher";
+}
+
+var projectDirectory = Path.Combine(BuildHistorySubDirectory, ProjectName);
+
+try {
+    if (Directory.Exists(projectDirectory)) {
+        var guid = Guid.NewGuid();
+        var zipPath = $"{projectDirectory}-{guid}.zip";
+        
+        using var fileStream = File.Create(zipPath);
+        ZipFile.CreateFromDirectory(projectDirectory, fileStream);
+        await fileStream.DisposeAsync();
+        
+        Directory.Delete(projectDirectory, recursive: true);
+        
+        WriteSuccessMessage($"Backed up previous build to -> {zipPath}");
+    }
+}
+catch (Exception ex) {
+    WriteWarningMessage($"Failed to backup previous build at -> {projectDirectory}");
+    WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+}
+
+try {
+    Directory.CreateDirectory(projectDirectory);
+}
+catch (Exception ex) {
+    WriteWarningMessage($"Failed to create the current project directory at -> {projectDirectory}");
+    WriteErrorMessage(ex.Message, exit: true, exitCode: 1);
+}
+
+
+
+WriteInformation("DDSG supports SVG, XML, and WEBP files for icon generation");
+WriteInformation("Please press O on your keyboard to open the Icon selection Dialog.", tagName: "[[INPUT]]:");
+Thread.Sleep(200);
+
+var userPressedKey = false;
+while (!userPressedKey) { userPressedKey = Console.ReadKey().Key is ConsoleKey.O; }
+Console.Clear();
+
+// https://github.com/mlabbe/nativefiledialog#file-filter-syntax
+var res = FileOpen(filterList: "xml,webp,svg");
+
+(bool fileSelected, string? filePath, string? error) = true switch {
+    _ when res.IsCancelled => (false, null, "User Cancelled."),
+    _ when res.IsError     => (false, null, res.ErrorMessage),
+    _ when res.IsOk        => (true,  res.Path, (string?)null),
+    _                      => (false, null, "Unhandled case in switch statement in Program.cs")
+};
+
+if (!fileSelected || filePath is null) { WriteErrorMessage(error, exit: true, exitCode: 1); }
+
+var sfs = await FileStructure.New(
+    ProjectDirectory: projectDirectory, 
+    PackageName: package.Name, 
+    InputIconPath: filePath
+);
+
+var useWorkProfile = device.HasWorkProfileConfigured && UserWantsToInstallInWorkProfile();
+var profileID = useWorkProfile ? "10" : "0";
+
+var stubInfo = new StubInfo(package, sfs, profileID);
+Generator.GenerateStub(stubInfo);
+
+
+

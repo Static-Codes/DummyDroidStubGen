@@ -333,6 +333,9 @@ public class Functions
     }
 
 
+    public static bool UserWantsToInstallInWorkProfile() {
+        return AskForSelection("Please select a profile", ["Home", "Work/Sandbox"]).Equals("Work/Sandbox");
+    }
 
     /// <summary>
     ///     Writes an input string to the associated process's StandardInput stream. <br/>

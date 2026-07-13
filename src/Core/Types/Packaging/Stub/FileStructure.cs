@@ -38,36 +38,30 @@ public class FileStructure
     
     /// <summary> The path to the AndroidManifest.xml file, which will be used during compilation. </summary>
     public required string ManifestFilePath { get; set; }
-
     
-    private static bool BackupPreviousBuild() { // TODO: IMPLEMENT ME
-        throw new NotImplementedException("Please implement me before committing.");
-    }
-    
-    public record NonNativeIconConversion(bool Required, bool Occurred, string? Path = null);
+    public record NonNativeIconConversion(bool Required, bool Occurred, string Path) {
+        public string? GetPathFileExtension() => System.IO.Path.GetExtension(Path);
+    };
 
     public enum NonNativeIconConversionStatus { UNUSED = -1, FAILURE = 0, SUCCESS = 1  }
 
     public record NonNativeIconResponse(NonNativeIconConversion Conversion, NonNativeIconConversionStatus Status) 
     {
-        public bool CheckForSuccess() => Status switch
-        {
-            FAILURE => false,
-            _ => true, // Handles both SUCCESS and UNUSED.
-        };
+        /// <summary> If the Conversion was successful (or didnt occur). </summary>
+        /// <returns>A bool representing this status.</returns>
+        public bool Success() => Status is not FAILURE;
+        public bool Skipped() => Status is UNUSED;
     }
 
     /// <summary>
     /// Will exit if iconFileType is UNSET or the svg conversion fails <br/>
     /// 
-    /// Returns: 
+    /// Returns: null
     /// A boolean detailing if the file contents was converted. <br/> 
     /// A nullable string that will either be null or contain the path to the converted file.
     /// </summary>
-    public static async Task<NonNativeIconResponse> HandleNonNativeIconFormats(IconFileType iconFileType, string inputSVGPath) 
-    {
-        WriteWarningMessage("Please implement SVG to Android Drawable Conversion in FileStructure.cs");
-        
+    private static async Task<NonNativeIconResponse> HandleSVGIcons(IconFileType iconFileType, string inputFilePath) 
+    {   
         if (iconFileType == IconFileType.UNSET) {
             WriteWarningMessage("Unable to create the internal directory structure for the stub.");
             WriteErrorMessage(
@@ -79,23 +73,23 @@ public class FileStructure
 
         else if (iconFileType == IconFileType.SVG) 
         {
-            var path = await ProcessSVGConversion(inputSVGPath);
+            var outputFilePath = await ProcessSVGConversion(inputFilePath);
+
+            if (outputFilePath == null) {
+                return new NonNativeIconResponse(
+                    Conversion: new NonNativeIconConversion( Required: true, Occurred: true, Path: inputFilePath),
+                    Status: FAILURE
+                ); 
+            }
+
             return new NonNativeIconResponse(
-                Conversion: new NonNativeIconConversion(
-                    Required: true,
-                    Occurred: true,
-                    Path: path
-                ),
+                Conversion: new NonNativeIconConversion( Required: true, Occurred: true, Path: outputFilePath),
                 Status: SUCCESS
             );
         }
 
-        return new NonNativeIconResponse
-        (
-            Conversion: new NonNativeIconConversion(
-                Required: false,
-                Occurred: false
-            ), 
+        return new NonNativeIconResponse(
+            Conversion: new NonNativeIconConversion(Required: false, Occurred: false, Path: inputFilePath), 
             Status: UNUSED
         );
     }
@@ -116,18 +110,23 @@ public class FileStructure
             WriteErrorMessage($"Expected package name in the format: 'com.yourname.yourapp'", exit: true, exitCode: 1);
         }
 
-        string? iconFileExt = null;
-        var iconFileType = InputIconPath.ToIconFileType(ref iconFileExt);
+        string? inputIconFileExt = null;
 
-        var iconResponse = await HandleNonNativeIconFormats(iconFileType, InputIconPath); 
+        var inputIconFileType = InputIconPath.ToIconFileType(ref inputIconFileExt);
+
+        var iconResponse = await HandleSVGIcons(inputIconFileType, InputIconPath); 
         
-        if (iconResponse.Conversion.Required && !iconResponse.Conversion.Occurred || iconResponse.Status == FAILURE) {
+        if (!iconResponse.Success()) {
             WriteWarningMessage("Icon file conversion failed.");
             WriteErrorMessage("The conversion either didnt occur, or failed.", exit: true, exitCode: 1);
         }
+    
+        // The output icon defaults to ".xml", this will be changed
+        string? outputIconFileExt = Path.GetExtension(iconResponse.Conversion.Path);
+        
 
         // At this point the file will either be .webp or .xml and can be natively embedded as the Stub's icon.
-        var iconFileName = $"icon{iconFileExt}";
+        var iconFileName = $"icon{outputIconFileExt}";
 
         // PackageNameParts' constructor ensures execution will not continue if the PackageName is invalid.
         PackageNameParts packageParts = new(PackageName.Split('.'));
@@ -164,11 +163,8 @@ public class FileStructure
         var manifestFilePath = Path.Combine(mainSourceDir, "AndroidManifest.xml");
     
         // Creating <ProjectDirectory>/src/main/res/<icon>.xml
-        var iconFilePath = iconResponse.Conversion.Occurred && iconResponse.Conversion.Path != null ?
-                                       Path.Combine(stubProjectDirectories.Drawables, iconResponse.Conversion.Path) : 
-                                       Path.Combine(stubProjectDirectories.Drawables, iconFileName); 
-                                        
-        var iconInfo = new Icon(InputIconPath, iconFilePath);
+        var iconFilePath = Path.Join(stubProjectDirectories.Drawables, iconFileName);          
+        var iconInfo = new Icon(iconResponse.Conversion.Path, iconFilePath);
 
         return new() {
             Directories = stubProjectDirectories,
@@ -179,30 +175,34 @@ public class FileStructure
 
     private static async Task<string?> ProcessSVGConversion(string inputSVGPath) 
     {
-        WriteInformation("You have selected an SVG file, this needs to be converted to Android's VectorDrawable format.");
-        WriteInformation("This process involves downloading a standalone application known as VDToolWrapper.\n");
-
-        var learnMoreChoice = AskForSelection("Would you like to learn more about how this application work?",  ["Yes", "No"]);
-
-        if (learnMoreChoice.IsExitOption()) { Environment.Exit(1); }
-
-        else if (learnMoreChoice is "Yes") {
-            WriteInformation("VDToolWrapper was compiled from VectorDrawableCliTool using a fork of Ryan Harter's VDTool.");
-            WriteInformation(coloredText: $"VD Tool\n\t{VDToolForkLink}", tagName: "[[LINK]]: ", tagNameColor: "orange");
-            WriteInformation(coloredText: $"VD Tool Builder\n\t{VDToolBuilderLink}\n", tagName: "[[LINK]]: ", tagNameColor: "orange");
-        }
-
-        WriteInformation("VDTool requires an additional 160MB of disk space for the download and extraction process.");
-
-        var continueChoice = AskForSelection("Would you like to continue?", ["Yes", "No"]);
-        
-        if (continueChoice.IsExitOption() || continueChoice is "No") { Environment.Exit(1); }
-
         // Checking if VDTool is already downloaded.
         var vdToolDownloaded = VDToolIsDownloaded();
+
+        WriteInformation("You have selected an SVG file, this needs to be converted to Android's VectorDrawable format.");
+
+        if (!vdToolDownloaded) 
+        {
+            WriteInformation("This process involves downloading a standalone application known as VDToolWrapper.\n");
+
+            var learnMoreChoice = AskForSelection("Would you like to learn more about how this application work?",  ["Yes", "No"]);
+
+            if (learnMoreChoice.IsExitOption()) { Environment.Exit(1); }
+
+            else if (learnMoreChoice is "Yes") {
+                WriteInformation("VDToolWrapper was compiled from VectorDrawableCliTool using a fork of Ryan Harter's VDTool.");
+                WriteInformation(coloredText: $"VD Tool\n\t{VDToolForkLink}", tagName: "[[LINK]]: ", tagNameColor: "orange");
+                WriteInformation(coloredText: $"VD Tool Builder\n\t{VDToolBuilderLink}\n", tagName: "[[LINK]]: ", tagNameColor: "orange");
+            }
+
+            WriteInformation("VDTool requires an additional 160MB of disk space for the download and extraction process.");
+
+            var continueChoice = AskForSelection("Would you like to continue?", ["Yes", "No"]);
         
-        // If not already downloaded, an attempt is made to download the VDTool archive.
-        if (!vdToolDownloaded && await DownloadHelper.DownloadVDToolArchive()) { vdToolDownloaded = true; }
+            if (continueChoice.IsExitOption() || continueChoice is "No") { Environment.Exit(1); }
+
+            // If not already downloaded, an attempt is made to download the VDTool archive.
+            if (await DownloadHelper.DownloadVDToolArchive()) { vdToolDownloaded = true; }
+        }
 
         // If the archive is still missing, an error will displayed by DownloadVDToolArchive() and execution ends. 
         if (!vdToolDownloaded) { Environment.Exit(1); }
@@ -257,6 +257,8 @@ public class FileStructure
             RedirectStandardOutput = true,
             CreateNoWindow = true,
             UseShellExecute = false,
+
+            WorkingDirectory = VDToolSubDirectory,
 
             // This is likely unneccessary as glibc handles both UTF8 and UTF16 string marshalling.
             StandardOutputEncoding = Encoding.UTF8,

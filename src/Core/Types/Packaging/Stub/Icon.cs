@@ -36,7 +36,7 @@ public class Icon
         InputFileType = inputIconPath.ToIconFileType();
         OutputFileType = outputIconPath.ToIconFileType();
 
-        if (InputFileType != IconFileType.WEBP && InputFileType != IconFileType.XML) {
+        if (OutputFileType == IconFileType.UNSET || OutputFileType == IconFileType.SVG) {
             throw new ArgumentException("Invalid IconFileType provided to StubIconInfo constructor, expected WEBP or XML");
         }
 
