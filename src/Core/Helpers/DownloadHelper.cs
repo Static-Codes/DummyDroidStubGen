@@ -11,7 +11,7 @@ public class DownloadHelper
     {
         HttpRequestMessage request = new(
             method: HttpMethod.Get, 
-            requestUri: $"https://github.com/Static-Codes/vd-tool-builder/releases/download/v1.0/vdtool-wrapper.zip"
+            requestUri: $"https://github.com/Static-Codes/vd-tool-builder/releases/download/v1.0/vd-tool-wrapper.zip"
         );
 
         request.Headers.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:151.0) Gecko/20100101 Firefox/151.0");
