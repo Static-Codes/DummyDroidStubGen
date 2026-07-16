@@ -29,7 +29,7 @@ using static Helpers.ShellTypeHelper;
 public class ShellCode 
 {
     /// <summary> A semantic representation of an empty JavaFileContent list. </summary>
-    public static readonly ShellFileContent Empty = new([]);    
+    public static ShellFileContent Empty => new([]);    
     public const string BuildFileName = "build.sh";
     public const string RunFileName = "run.sh";
 
@@ -209,7 +209,7 @@ public class ShellCode
     {
         file = null;
         try {
-            file = ShellFiles.Where(f => f.FileName == fileName).FirstOrDefault();
+            file = ShellFiles.FirstOrDefault(f => f.FileName == fileName);
         }
         catch (Exception ex) {
             WriteWarningMessage($"Unable to lookup local stub source file: {fileName}");
