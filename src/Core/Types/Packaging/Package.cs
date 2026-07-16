@@ -21,7 +21,7 @@ using System.Text.Json.Serialization;
 using DummyDroidStubGen.Core.Helpers.Security;
 using static DummyDroidStubGen.Core.Helpers.IO.InputHelper;
 using static DummyDroidStubGen.Core.Helpers.NetworkHelper;
-using static DummyDroidStubGen.Core.Helpers.PackageHelpers;
+using static DummyDroidStubGen.Core.Helpers.PackageHelper;
 using static DummyDroidStubGen.Global.Messaging;
 
 public class Package(string name, PackageCategory category, string? label = null, string? baseCodePath = null, bool isManaged = false)

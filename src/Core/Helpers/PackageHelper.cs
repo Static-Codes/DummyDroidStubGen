@@ -21,7 +21,7 @@ using System.Text.Json;
 using static DummyDroidStubGen.Core.Helpers.IO.FileHelper;
 using static DummyDroidStubGen.Global.Messaging;
 
-public class PackageHelpers 
+public class PackageHelper 
 {
 
     /// <summary>
