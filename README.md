@@ -1,20 +1,17 @@
-> [!CAUTION]
-> ## [Keep Android Open](https://keepandroidopen.org/)
-> ###  Your phone is about to stop being yours.
-> Starting September 2026, a silent update, nonconsensually pushed by Google, will block every
-> Android app whose developer hasn't registered with Google, signed their contract, paid up, and
-> handed over government ID.
-> **Every app and every device, worldwide, with no opt-out.**
+# DummyDroidStubGen
 
 DDSG (**DummyDroidStubGen**) is a simple, yet versatile linux app to generate *"Dummy"* packages (known as *"Stubs"*) that serve as entry points for another app.
 
 ## Use Cases
 While there are a variety of use cases for **DDSG**, it was originally developed to reintroduce more granular gesture controls to [Lawnchair](https://github.com/LawnchairLauncher/lawnchair/). Specifically, a double-tap gesture to open a sandboxed application (One that is installed in the work profile through services like [Insular](https://github.com/proletarius101/Insular), [Island](https://github.com/oasisfeng/island), etc).
 
-## Hardware Requirements
-- **Android 5.0+ (Lollipop)**
-- **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
+## Note:
+> [!IMPORTANT]
+> Please read about the [Keep Android Open](https://keepandroidopen.org/) project.
 
+## Hardware Requirements
+- **Android 5.0 (Lollipop) or newer**
+- **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
 
 ## Dependencies
 - aapt2
@@ -27,7 +24,10 @@ While there are a variety of use cases for **DDSG**, it was originally developed
 
 ## Features
 - Completely De-Googled*
+
 > DDSG contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Package.cs#L81) that makes a request to `play.google.com` to prevent duplicate package generation, however, this is disabled by default.
+
+> DDSG also contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Stub/FileStructure.cs#L232) that allows the user to convert an SVG to Android's Native VectorDrawable. This feature relies on [code](https://android.googlesource.com/platform/tools/base/+/refs/heads/main/sdk-common/src/main/java/com/android/ide/common/vectordrawable/) that was released with Android's Vector Studio, however, the precompiled binary does not make any network requests, or contain any storage capabilities. For more information on the SVG to VectorDrawable XML conversion, click [here](https://github.com/Static-Codes/vd-tool-builder)
 
 - No Invasive Permissions
 
@@ -46,4 +46,3 @@ With the release of Lawnchair 15 Beta, the entire codebase was reworked.
 This reworking affected more than just gesture controls, however, these other changes aren't relevant to **DDSG**.
 
 For more information on the changes from Lawnchair 14 and Lawnchair 15, click [here](./BACKSTORY.md)
-
