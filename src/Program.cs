@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+using DummyDroidStubGen.Core.Helpers.IO;
 using DummyDroidStubGen.Core.Types;
 using DummyDroidStubGen.Core.Types.Packaging;
 using DummyDroidStubGen.Core.Types.Packaging.Stub;
@@ -105,15 +106,16 @@ var usingLabels = device.RetrievalType is APP_NAME;
 
 var packageSelection = AskForSelection(
     message: "Please select the application you wish to be launched by the compiled stub.",
-    options: device.GetMenuOptions(usingLabels)
+    options: device.GetMenuOptions(usingLabels),
+    search: true
 );
 
-Package? package;
+Package? targetPackage;
 string? ProjectName;
 
 var resolutionSuccess = usingLabels switch {
-    true  => device.TryGetPackageByLabel(packageSelection, out package),
-    false => device.TryGetPackageByName(packageSelection, out package),
+    true  => device.TryGetPackageByLabel(packageSelection, out targetPackage),
+    false => device.TryGetPackageByName(packageSelection, out targetPackage),
 };
 
 if (!resolutionSuccess) {
@@ -121,12 +123,12 @@ if (!resolutionSuccess) {
     WriteInformation($"This is likely a bug, please make a bug report at: {ProjectIssueLink}");
 }
 
-if (package!.Label is null || package.Label is "Unknown") {
+if (targetPackage!.Label is null || targetPackage.Label is "Unknown") {
     var rawPackageName = AskForInput("Please enter your desired name for the compiled stub: ");
     ProjectName = PackageSanitizationRegex().Replace(input: rawPackageName, replacement: "");
-    package.Label = ProjectName;
+    targetPackage.Label = ProjectName;
 } else {
-    ProjectName = PackageSanitizationRegex().Replace(input: package.Label, replacement: "") + "Launcher";
+    ProjectName = PackageSanitizationRegex().Replace(input: targetPackage.Label, replacement: "") + "Launcher";
 }
 
 var projectDirectory = Path.Combine(BuildHistorySubDirectory, ProjectName);
@@ -180,17 +182,20 @@ var res = FileOpen(filterList: "xml,webp,svg");
 
 if (!fileSelected || filePath is null) { WriteErrorMessage(error, exit: true, exitCode: 1); }
 
-var sfs = await FileStructure.New(
+var stubPackageName = $"com.dummy.{targetPackage.Label.Replace(" ", "").ToLower()}launcher";
+var stubPackageLabel = $"{targetPackage.Label}Launcher";
+var stubPackage = new Package(stubPackageName, PackageCategory.Application, stubPackageLabel);
+
+var fileStructure = await FileStructure.New(
     ProjectDirectory: projectDirectory, 
-    PackageName: package.Name, 
+    PackageName: stubPackageName, 
     InputIconPath: filePath
 );
 
 var useWorkProfile = device.HasWorkProfileConfigured && UserWantsToInstallInWorkProfile();
 var profileID = useWorkProfile ? "10" : "0";
 
-var stubInfo = new StubInfo(package, sfs, profileID);
+var stubInfo = new StubInfo(targetPackage, stubPackage, fileStructure, profileID);
 Generator.GenerateStub(stubInfo);
 
-
-
+await HandleInstallationAsync(stubInfo);

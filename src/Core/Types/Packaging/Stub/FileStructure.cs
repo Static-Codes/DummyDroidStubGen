@@ -38,6 +38,8 @@ public class FileStructure
     
     /// <summary> The path to the AndroidManifest.xml file, which will be used during compilation. </summary>
     public required string ManifestFilePath { get; set; }
+
+    public PackageNameParts? PackageParts { get; init; }
     
     public record NonNativeIconConversion(bool Required, bool Occurred, string Path) {
         public string? GetPathFileExtension() => System.IO.Path.GetExtension(Path);
@@ -170,6 +172,7 @@ public class FileStructure
             Directories = stubProjectDirectories,
             Icon = iconInfo,
             ManifestFilePath = manifestFilePath,
+            PackageParts = packageParts
         };
     }
 

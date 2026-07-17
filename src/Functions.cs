@@ -17,13 +17,17 @@
 
 namespace DummyDroidStubGen;
 
+using Core.Helpers;
 using Core.Types;
 using Core.Types.ADB.Wireless;
+using Core.Types.Packaging.Stub;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using static Core.Helpers.IO.FileHelper;
 using static Core.Helpers.IO.InputHelper;
 using static Core.Types.ADB.Connection;
 using static Core.Types.ADB.Connection.ConnectionMethod;
+using static Core.Types.Packaging.Stub.Contents.ShellCode;
 using static Global.Constants;
 using static Global.Messaging;
 
@@ -50,10 +54,7 @@ public class Functions
         }
     }
 
-
-    /// <summary> 
-    ///     Creates an instance of a Device object using the specified name and connection status.
-    /// </summary>
+    /// <summary> Creates an instance of a Device object using the specified name and connection status. </summary>
     public static Device CreateDevice(string deviceName, ConnectionStatus connectionStatus) 
     {
         if (!connectionStatus.Connected) {
@@ -88,7 +89,6 @@ public class Functions
             _ => $"Android Device (WiFi) @ {connectionStatus.Identifier}"   
         };
     }
-
 
     /// <summary>
     ///     Processes the ConnectionStatus associated with the device passed as a parameter. <br/>
@@ -138,6 +138,33 @@ public class Functions
         };
     }
 
+    /// <summary> 
+    ///     Asks the user if they wish to view the compiled stub's source or proceed with the installation. 
+    /// </summary>
+    public static async Task HandleInstallationAsync(StubInfo stubInfo) 
+    {
+        var message = "Would you like to view the source code for the compiled stub before installing?";
+        string[] options = ["Yes (Requires manual installation)", "No, continue with the installation"];
+
+        var confirmationSelection = AskForSelection(message, options);
+
+        UserExitStatusCheck(confirmationSelection);
+
+        var parentDirectory = stubInfo.StubStructure.Directories.ProjectParent;
+        var profileID = stubInfo.ProfileID;
+        var packageName = stubInfo.TargetPackage.Name;
+        var apkName = $"{stubInfo.TargetPackage.Label}Launcher.apk";
+
+        if (confirmationSelection.StartsWith("Yes")) {
+            var cmd = $"cd {parentDirectory} && adb install --user {profileID} {apkName}";
+            WriteInformation("To manually install the compiled stub, please run the following command:");
+            WriteInformation(whiteText: cmd, tagName: "[[COMMAND]]:", tagNameColor: "purple");
+            await TryOpenDirectoryInDefaultBrowser(parentDirectory);
+            Environment.Exit(0);
+        }
+
+        await RunStubInstallScriptAsync(parentDirectory, packageName, apkName);
+    }
 
     /// <summary> Parses the contents returned from the command: "adb shell getprops" </summary>
     public static Dictionary<string, string> ParseDeviceProperties(List<string> commandOutput)
@@ -332,6 +359,54 @@ public class Functions
         return new ProcessResult(output, error, exitCode, exception);
     }
 
+
+    private static async Task RunStubInstallScriptAsync(string parentDirectory, string packageName, string apkName)
+    {
+        if (!Directory.Exists(parentDirectory))
+        {
+            WriteWarningMessage("An exception occured while trying to install the compiled stub.");
+            WriteErrorMessage($"Invalid directory: {parentDirectory}", exit: true, exitCode: 1);
+        }
+
+        var filePath = Path.Combine(parentDirectory, RunFileName);
+
+        if (!File.Exists(filePath)) {
+            WriteWarningMessage("An exception occured while trying to install the compiled stub.");
+            WriteErrorMessage($"Could not locate: {filePath}", exit: true, exitCode: 1);
+        }
+
+        var psi = new ProcessStartInfo()
+        {
+            FileName = "/bin/sh",
+            Arguments = $"-c \"./{RunFileName} '{packageName}' '{apkName}'\"",
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            WorkingDirectory = parentDirectory
+        };
+
+        DataReceivedEventHandler? outputHandler = null;
+        DataReceivedEventHandler? errorHandler = null;
+
+        if (!PermissionHelper.TrySetExecutablePermissions(filePath)) {
+            WriteErrorMessage("Unable to give executable permissions to the installer script.");
+            WriteInformation("To continue, please run the following command, then restart DDSG.");
+            WriteInformation($"chmod +x {filePath}", tagName: "[[COMMAND]]:");
+            Environment.Exit(1);
+        }
+
+        var process = await RunProcessAsync(psi, inputArg: null, outputHandler, errorHandler);
+
+        foreach (var line in process.Output) { Console.WriteLine(line); }
+        foreach (var line in process.Error) { Console.WriteLine(line); }
+        Console.WriteLine();
+        Console.WriteLine("Exit: " + process.ExitCode);
+
+        
+
+
+    }
 
     public static bool UserWantsToInstallInWorkProfile() {
         return AskForSelection("Please select a profile", ["Home", "Work/Sandbox"]).Equals("Work/Sandbox");

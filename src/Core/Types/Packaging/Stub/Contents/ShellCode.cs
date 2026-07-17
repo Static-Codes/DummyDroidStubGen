@@ -124,7 +124,7 @@ public class ShellCode
 
 
     /// <summary> Populates the contents of RunFileName </summary>
-    private static void PopulateRunScript(string profileID = "0", string? scriptDirectory = null)
+    private static void PopulateRunScript(StubInfo stubInfo, string? scriptDirectory = null)
     {
         if (!TryGetShellFile(RunFileName, out var shellFile) || shellFile == null) {
             Environment.Exit(1);
@@ -141,7 +141,7 @@ public class ShellCode
         // Declaring the $PROFILE_ID
         shellFile.AddVariableDeclaration(
             variableName: "PROFILE_ID", 
-            value: profileID, 
+            value: stubInfo.ProfileID, 
             comment: "Change this to \"10\" if you want to install the stub to a sandboxed or work profile."
         );
 
@@ -161,14 +161,47 @@ public class ShellCode
         shellFile.AddSleepCommand(seconds: 1, tabs);
         shellFile.AddEmptyLine();
 
-        // Building the stub
+        // Notifying the user the compilation process is beginning.
         shellFile.AddEchoCommand(text: "Compiling dummy stub for source...", escaped: false, tabs);
+        
+        // Creating a chmod +x command with the provided script file.
+        var filePath = GetAbsoluteScriptPath(BuildFileName, scriptDirectory);
+        shellFile.AddChmodCommand(filePath, flags: "+x", escaped: true, tabs);
+        
+        var stubDirPath = stubInfo.StubPackage.Name.Replace(".", "/");
+
+        if (stubDirPath is null) {
+            WriteWarningMessage("Unable to populate the run.sh script for the desired stub.");
+            WriteErrorMessage("stubDirPath is null in PopulateRunScript.", exit: true, exitCode: 1);
+        }
+
+        // Writing the actual build command
         shellFile.AddCommand(
-            command: GetAbsoluteScriptPath(RunFileName, scriptDirectory), 
-            arguments: null, 
+            command: filePath, 
+            arguments: [
+                new ShellCommandArgument(Flag: stubInfo.TargetPackage.Label),                 // The Stub Name
+                new ShellCommandArgument(Flag: stubDirPath),                                  // The Stub Directory Path
+                new ShellCommandArgument(Flag: $"{stubInfo.StubPackage.Label}.apk"),          // The APK Name
+            ], 
             tabs
         );
         shellFile.AddSleepCommand(seconds: 1, tabs);
+
+        shellFile.AddEchoCommand(
+            "[13/16] -> Installing %s (%s) to device via adb...\\n \"$APP_NAME\" \"$APK_NAME\"", 
+            escaped: true, 
+            tabs
+        );
+        // printf "[13/16] -> Installing %s (%s) to device via adb...\n" "$APP_NAME" "$APK_NAME"
+        shellFile.AddLine($"if ! {ADBPath} install --user \"$PROFILE_ID\" \"$2\"; then");
+        
+        // Increasing tabs 0 -> 1
+        tabs++;
+        shellFile.AddLine("exit 1", tabs);
+
+        // Decreasing tabs 1 -> 0
+        tabs--;
+        shellFile.AddLine("fi");
 
 
         // RunDebugIfActive(shellFile);
@@ -176,10 +209,10 @@ public class ShellCode
 
 
     /// <summary> Populates the contents of the 2 required Shell script files for the generated stub. </summmary>
-    public static void PopulateShellFiles(string profileID = "0") 
+    public static void PopulateShellFiles(StubInfo stubInfo) 
     {
         PopulateBuildScript();
-        PopulateRunScript(profileID);
+        PopulateRunScript(stubInfo);
     }
 
 
@@ -331,7 +364,7 @@ public class ShellCode
             // Indicating D8 should compile using the specified Java API version.
             // TODO: Run tests with Value: "8"
             new ShellCommandArgument(Flag: "--release"),
-            new ShellCommandArgument(Flag: "--output", "dex_out/ obj/\"$CLASS_DIR\"*.class")
+            new ShellCommandArgument(Flag: "--output", "dex_out/ obj/$CLASS_DIR*.class")
         ]);
         shellFile.AddEmptyLine();
     }
@@ -358,7 +391,7 @@ public class ShellCode
             new("AppName", "OnDeviceLabelFetcher"),
             new("Package/Directory/Structure", "com/staticcodes/odlf"),
             new("packageName.apk", "odlf.apk")
-        ], ref tabs);
+        ], BuildFileName, ref tabs);
 
         // Declaring the build script's variables.
         WriteBuildScriptVariablesBlock(shellFile, tabs);        
@@ -414,7 +447,7 @@ public class ShellCode
         shellFile.AddEmptyLine();
 
         // echo -e \"\\n[3/16] -> Compiling Resources for $APP_NAME...\\n\"
-        shellFile.AddEchoCommand("\\n[3/16] -> Compiling Resources for $APP_NAME...\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("[3/16] -> Compiling Resources for $APP_NAME...\\n", escaped: true, tabs);
 
         // Compiling the stub's resources to compiled_resources.zip
         // aapt2 compile --dir \"$PROJECT_ROOT/src/main/res\" -o \"$PROJECT_ROOT/compiled_resources.zip\"
@@ -449,7 +482,7 @@ public class ShellCode
             new(Flag: "-keysize", Value: "2048"),
             // TODO: Change this to something more reasonable.
             new(Flag: "-validity", Value: "10000"), // Setting the number of days the signature is valid for.
-            new(Flag: "-dname", Value: "CN=Android Debug,O=Android,C=US")
+            new(Flag: "-dname", Value: "\"CN=Android Debug,O=Android,C=US\"")
         ], tabs);
 
         tabs--; // Decreasing tabs 1 -> 0
@@ -524,9 +557,15 @@ public class ShellCode
         );
         // shellFile.AddLine("APK_NAME=\"$3\" # The filename of the compiled APK");
         
+        // shellFile.AddVariableDeclaration(
+        //     variableName: "CLASS_DIR", 
+        //     value: "$PKG_DIR_STRUCTURE/$APP_NAME",
+        //     comment: "The path directory containing the *.class files generated during compilation",
+        //     tabs
+        // );
         shellFile.AddVariableDeclaration(
             variableName: "CLASS_DIR", 
-            value: "$PKG_DIR_STRUCTURE/$APP_NAME",
+            value: "$PKG_DIR_STRUCTURE/",
             comment: "The path directory containing the *.class files generated during compilation",
             tabs
         );
@@ -559,7 +598,7 @@ public class ShellCode
         shellFile.AddInvalidUsageBlock([
             new("packageName", "com.yourname.yourapp"),
             new("apkFileName", "yourapp.apk"),
-        ], ref tabs);  
+        ], RunFileName, ref tabs);  
     }
 
 

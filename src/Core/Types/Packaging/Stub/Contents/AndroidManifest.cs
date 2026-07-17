@@ -17,21 +17,20 @@
 namespace DummyDroidStubGen.Core.Types.Packaging.Stub.Contents;
 
 using System.Xml.Linq;
-using Types.Packaging;
 using Types.Packaging.Stub;
 using Types.Versioning;
 using static Global.Messaging;
 
-public class AndroidManifest(FileStructure fileStructure, Package package) 
+public class AndroidManifest(StubInfo stubInfo) 
 {   
     /// <summary> The stub's file structure. This will be accessed by GenerateXDoc() internally. </summary>
-    private readonly FileStructure FileStructure = fileStructure;
+    private readonly FileStructure FileStructure = stubInfo.StubStructure;
 
     /// <summary> The Package object associated with the stub's. This will be accessed by GenerateXDoc() internally. </summary>
-    private readonly Package Package = package;
+    // private readonly Package Package = package;
     
     /// <summary> The path the AndroidManifest.xml file will be written to. </summary>
-    public string FilePath = fileStructure.ManifestFilePath;
+    public string FilePath = stubInfo.StubStructure.ManifestFilePath;
 
     /// <summary> The minimum supported Android SDK version for the compiled stub. </summary>
     public const int MINIMUM_SDK_VERSION = 21;
@@ -57,13 +56,14 @@ public class AndroidManifest(FileStructure fileStructure, Package package)
     {
         var iconFileName = Path.GetFileNameWithoutExtension(FileStructure.Icon.OutputFilePath);
 		var ns = XNamespace.Get("http://schemas.android.com/apk/res/android");
+
         return new XDocument
         (
 			new XDeclaration("1.0", "utf-8", "yes"),
 			new XElement("manifest",
 			[
 				new XAttribute(XNamespace.Xmlns + "android", ns.NamespaceName),
-				new XAttribute("package", Package.Name),
+				new XAttribute("package", stubInfo.StubPackage.Name),
 
 				new XComment(
 					"""
@@ -112,7 +112,7 @@ public class AndroidManifest(FileStructure fileStructure, Package package)
 		            """
 				),
 				new XElement("application",
-					new XAttribute(ns + "label", Package.Label),
+					new XAttribute(ns + "label", stubInfo.StubPackage.Label),
 					new XAttribute(ns + "icon", $"@drawable/{iconFileName}"),
 					new XAttribute(ns + "supportsRtl", "true"),
 					new XAttribute(ns + "theme", "@android:style/Theme.NoTitleBar"),

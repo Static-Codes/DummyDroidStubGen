@@ -1,9 +1,11 @@
 namespace DummyDroidStubGen.Core.Helpers.IO;
 
-using static Global.Messaging;
-using static Global.Constants;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using static Global.Messaging;
+using static Global.Constants;
+using static Functions;
 using static System.Environment;
 
 public static class FileHelper 
@@ -361,6 +363,39 @@ public static class FileHelper
         }
     }
 
+    public static async Task<bool> TryOpenDirectoryInDefaultBrowser(string directory)
+    {
+        if (!Directory.Exists(directory))
+        {
+            WriteWarningMessage("Unable to open the specified directory.");
+            WriteErrorMessage($"Directory not found at: {directory}");
+            return false;    
+        }
+
+        var psi = new ProcessStartInfo()
+        {
+            FileName = "/usr/bin/xdg-open",
+            Arguments = directory,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+        };
+
+        DataReceivedEventHandler? outputHandler = null;
+        DataReceivedEventHandler? inputHandler = null;
+        var process = await RunProcessAsync(psi, inputArg: null, outputHandler, inputHandler);
+
+        if (process.ExitCode != 0) 
+        {
+            WriteWarningMessage($"Unable to open '{directory}'");
+            foreach (var error in process.Error) {
+                WriteErrorMessage(error);
+            }
+            return false;    
+        }
+        return true;
+    }
     public static bool VDToolIsDownloaded()
     {
         string[] files = [ 

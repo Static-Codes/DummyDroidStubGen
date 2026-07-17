@@ -85,16 +85,26 @@ public class ShellFile(string FileName, ShellFileContent Content)
         AddLine(string.Join(' ', [command, ..parts]), tabs);
     }
 
-
-    /// <summary> Calls AddLine to create a "echo" command. </summary>
-    public void AddEchoCommand(string text, bool escaped = true, int tabs = 0) 
+    
+    /// <summary> Calls AddLine to create a "chmod" command. </summary>
+    public void AddChmodCommand(string filePath, string flags, bool escaped = true, int tabs = 0) 
     {
-        AddCommand("echo", [
+        AddCommand("chmod", [
             escaped switch {
-                true => new ShellCommandArgument(Flag: "-e", Value: $"\"{text}\""),
-                false => new ShellCommandArgument(Flag: $"\"{text}\"")
+                true => new ShellCommandArgument(Flag: flags, Value: $"\"{filePath}\""),
+                false => new ShellCommandArgument(Flag: $"\"{filePath}\"")
             }
         ], tabs);
+    }
+
+    /// <summary> Calls AddLine to create a "echo or printf" command. </summary>
+    public void AddEchoCommand(string text, bool escaped = true, int tabs = 0) 
+    {
+        if (escaped) { 
+            AddCommand("printf", [new ShellCommandArgument(Flag: "%s\\n", Value: $"\"{text}\"")], tabs);
+            return;
+        }
+        AddCommand("echo", [new ShellCommandArgument(Flag: $"\"{text}\"")], tabs);
     }
 
     /// <summary> Appends a ShellFileLine containing a new line char to the existing Dictionary. </summary>
@@ -130,7 +140,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
     public record UsageArgument(string Name, string Value);
 
     /// <summary> Inserts an invalid usage block using the specified UsageArgument(s). </summary>
-    public void AddInvalidUsageBlock(UsageArgument[] arguments, ref int tabs) 
+    public void AddInvalidUsageBlock(UsageArgument[] arguments, string shellFileName, ref int tabs) 
     {
         if (arguments.Length == 0) {
             WriteWarningMessage("arguments is null in AddInvalidUsageBlock");
@@ -146,7 +156,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
         var numberLineBuilder = new StringBuilder();
 
         if (arguments.Length == 1) {
-            numberLineBuilder.AppendLine("if [ -z \\\"$1\\\" ]; then");
+            numberLineBuilder.AppendLine("if [ -z \"$1\" ]; then");
         }
 
         else 
@@ -155,7 +165,7 @@ public class ShellFile(string FileName, ShellFileContent Content)
 
             for (int i = 0; i < arguments.Length; i++ )
             {
-                sanitizedNumbers[i] = $"\\\"${i+1}\\\"";
+                sanitizedNumbers[i] = $"\"${i+1}\"";
 
                 if (i == 0) {
                     numberLineBuilder.Append($"if [ -z {sanitizedNumbers[i]} ] || ");
@@ -181,12 +191,12 @@ public class ShellFile(string FileName, ShellFileContent Content)
         AddLine("echo \"Invalid usage.\"", tabs);
         
         AddLine(
-            line: $"echo \"Expected: ./{BuildFileName} {string.Join(' ', sanitizedNames)}\"", 
+            line: $"echo \"Expected: ./{shellFileName} {string.Join(' ', sanitizedNames)}\"", 
             tabs
         );
 
         AddLine(
-            line: $"echo \"Example: ./{BuildFileName} {string.Join(' ', sanitizedValues)}\"", 
+            line: $"echo \"Example: ./{shellFileName} {string.Join(' ', sanitizedValues)}\"", 
             tabs
         );
 
@@ -244,13 +254,13 @@ public class ShellFile(string FileName, ShellFileContent Content)
     /// <summary> Calls AddLine to create a "mkdir" command. </summary>
     public void AddMkdirCommand(string[] directories, bool createParents = true)
     {
-        AddCommand("mkdir", [
-            createParents switch {
-                true => new ShellCommandArgument(Flag: "-p", Value: $"\"{string.Join(' ', directories)}\""),
-                false => new ShellCommandArgument(Flag: $"\"{string.Join(' ', directories)}\"")
-            }
-        ]);
+        var directoryArguments = directories.Select(d => new ShellCommandArgument(Flag: "", Value: d)).ToArray();
+
+        AddCommand("mkdir", createParents ?
+            [.. directoryArguments.Prepend(new ShellCommandArgument(Flag: "-p"))] : 
+            directoryArguments);
     }
+
 
     /// <summary> Calls AddLine using "{" </summary>
     public void AddOpeningBracket(int tabs = 0) => AddLine("{", tabs: tabs);

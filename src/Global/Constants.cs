@@ -27,6 +27,7 @@ internal class Constants
     public const string JavaPath = "/usr/bin/java";
     public const string JavaCompilerPath = "/usr/bin/javac";
     public const string UnzipPath = "/usr/bin/unzip";
+    public const string XDGOpenPath = "/usr/bin/xdg-open";
     public const string ZipPath = "/usr/bin/zip";
     
     public const string JavaLibsResourcePath = "Resources.libs.zip";

@@ -164,5 +164,11 @@ public class PackageNameParts(string[] PartsArray)
     public string AppName = PartsArray[2];
 };
 
+public static class PackageNamePartsExtension
+{
+    public static string AsDirectoryPath(this PackageNameParts p) => $"{p.PackageType}/{p.DeveloperName}/{p.AppName}";
+    public static string? ToPackageName(this PackageNameParts p) => $"{p.PackageType}.{p.DeveloperName}.{p.AppName}";
+}
+
 /// <summary> An enum representing the Retrieval Type chosen by the user. </summary>
 public enum PackageRetrievalType { UNSET = 0, APP_NAME = 1, PACKAGE_NAME = 2 }

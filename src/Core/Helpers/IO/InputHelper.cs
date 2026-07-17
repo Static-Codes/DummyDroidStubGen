@@ -47,12 +47,12 @@ public static class InputHelper
 
 
     /// <summary> Prompts the user to select a choice from a CLI menu of options. </summary>
-    public static string AskForSelection(string message, IEnumerable<object> options, int? pageSize = null)
+    public static string AskForSelection(string message, IEnumerable<object> options, int? pageSize = null, bool search = false)
     {
         var sanitizedMessage = $"[{OrangeHex}]{InputTag}[/] {message}";
 
         var promptResponse = AnsiConsole.Prompt(
-            MakeSelectionPrompt(sanitizedMessage, [.. options], pageSize)
+            MakeSelectionPrompt(sanitizedMessage, [.. options], pageSize, search)
         );
 
         UserExitStatusCheck(promptResponse);

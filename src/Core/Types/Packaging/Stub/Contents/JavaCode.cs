@@ -29,7 +29,7 @@ public record JavaImport(bool Static, string Name);
 public class JavaCode
 {
     /// <summary> A semantic representation of an empty JavaFileContent list. </summary>
-    private static readonly JavaFileContent Empty = new([]);
+    private static JavaFileContent Empty => new([]);
 
     /// <summary> A List of JavaFile objects to be called by PopulateSourceFiles and WriteSourceFiles. </summary>
     private static readonly List<JavaFile> JavaFiles =
@@ -78,7 +78,7 @@ public class JavaCode
     /// <summary> Populates the contents of Blacklist.java using the provided package object. </summary>
     private static void PopulateBlacklist(Package package) 
     {
-        if (!TryGetJavaFile("PackageResult.java", out var javaFile) || javaFile == null) {
+        if (!TryGetJavaFile("Blacklist.java", out var javaFile) || javaFile == null) {
             Environment.Exit(1);
         }
 
@@ -110,7 +110,15 @@ public class JavaCode
         var blacklistedPackages = Package.GetBlacklistedPackages();
 
         // This is infinitely more efficient than using a hardcoded blacklist on the stub generator, or the stub itself.
-        javaFile.AddLines(lines: blacklistedPackages.Select(bp => $"\"{bp.Name}\","), tabs);
+        var packages = blacklistedPackages.Select(bp => $"\"{bp.Name}\",");
+        var numberOfPackages = packages.Count();
+        
+        // This is a workaround since arrays cannot end with a comma in Java.
+        var allPackagesButLast = packages.Take(packages.Count() - 1);
+        javaFile.AddLines(allPackagesButLast, tabs);
+
+        var lastPackage = packages.Last().TrimEnd(',');
+        javaFile.AddLine(lastPackage, tabs);
 
         // Decreasing tabs 3 -> 2
         tabs--;
@@ -162,8 +170,8 @@ public class JavaCode
         }
 
         JavaImport[] imports = [
-            new(Static: false, Name: "import android.app.Activity"), 
-            new(Static: false, Name: "import android.content.ComponentName"), 
+            new(Static: false, Name: "android.app.Activity"), 
+            new(Static: false, Name: "android.content.ComponentName"), 
             new(Static: false, Name: "android.os.UserHandle"),
             new(Static: false, Name: "android.content.pm.LauncherActivityInfo"),
             new(Static: false, Name: "android.content.pm.LauncherApps"),
@@ -195,8 +203,8 @@ public class JavaCode
         
         int tabs = 1;
 
-        javaFile.AddLine($"private final String appName = {package.Label};", tabs);
-        javaFile.AddLine($"private final String packageName = {package.Name};", tabs);
+        javaFile.AddLine($"private final String appName = \"{package.Label}\";", tabs);
+        javaFile.AddLine($"private final String packageName = \"{package.Name}\";", tabs);
         javaFile.AddEmptyLine();
 
         javaFile.AddLine("private PackageResult packageResult = null;", tabs);
@@ -349,7 +357,7 @@ public class JavaCode
         tabs++;
 
         // Creates an instance of the MainActivity
-        javaFile.AddLine("super.onCreate(b)", tabs);
+        javaFile.AddLine("super.onCreate(b);", tabs);
         javaFile.AddEmptyLine();
 
         // Ensuring the connected device's screen doesn't turn off during execution.
@@ -532,7 +540,7 @@ public class JavaCode
             tabs
         );
         javaFile.AddEmptyLine();
-        javaFile.AddLine("Skipped past failed resolutions.", tabs);
+        javaFile.AddComment("Skipped past failed resolutions.", tabs);
         javaFile.AddLine("if (activities == null || activities.isEmpty()) { continue; }", tabs);
         javaFile.AddEmptyLine();
 
@@ -570,7 +578,7 @@ public class JavaCode
         javaFile.AddEmptyLine();
         javaFile.AddComment("If the desired package is not present:", tabs);
         javaFile.AddComment("The user is notified and the stub's execution is terminated.", tabs);
-        javaFile.AddComment("if (!packageResult.PackageFound)", tabs);
+        javaFile.AddLine("if (!packageResult.PackageFound)", tabs);
         javaFile.AddOpeningBracket(tabs);
 
 
@@ -598,11 +606,16 @@ public class JavaCode
         javaFile.AddLine("packageResult.MainActivityName,", tabs);
         javaFile.AddLine("packageResult.Profile,", tabs);
         javaFile.AddLine("null,", tabs);
-        javaFile.AddLine("null,", tabs);
-        
+        javaFile.AddLine("null", tabs);
 
-        // Decreasing tabs 4 -> 2
-        tabs -= 2;
+
+        // Decreasing tabs 4 -> 3
+        tabs -= 1;
+        javaFile.AddLine(");", tabs);
+
+        // Decreasing tabs 3 -> 2
+        tabs -= 1;
+
         javaFile.AddClosingBracket(tabs);
         javaFile.AddEmptyLine();
 

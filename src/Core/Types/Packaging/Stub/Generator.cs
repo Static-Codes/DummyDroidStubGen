@@ -31,12 +31,14 @@ public class Generator
             WriteDebugMessage($"IconBuffer Length in bytes: {stubInfo.StubStructure.Icon.IconBuffer.Length}");
         #endif
 
+        var stubLabelName = $"{stubInfo.TargetPackage.Label}Launcher";
+
         // Populating then writing the two Shell script files to disk.
-        PopulateShellFiles(stubInfo.ProfileID);
+        PopulateShellFiles(stubInfo);
         WriteShellFiles(stubInfo.StubStructure.Directories.ProjectParent);
 
         // Writing the App Icon and AndroidManifest.xml to the project's parent directory.
-        AndroidManifest manifest = new(stubInfo.StubStructure, stubInfo.PackageInfo);
+        var manifest = new AndroidManifest(stubInfo);
         AppIcon.Write(stubInfo);
         manifest.Write();
 
@@ -46,15 +48,15 @@ public class Generator
         // Writing the .project file to the project's parent directory.
         CreateProjectFile(
             parentDirectory: stubInfo.StubStructure.Directories.ProjectParent, 
-            projectName: stubInfo.PackageInfo.Label
+            projectName: stubLabelName
         );
 
         // Populating then writing the three Java source files to disk.
-        PopulateSourceFiles(stubInfo.PackageInfo);
+        PopulateSourceFiles(stubInfo.StubPackage);
         WriteSourceFiles(stubInfo.StubStructure.Directories.JavaCode);
 
-        WriteSuccessMessage($"Compiled {stubInfo.PackageInfo.Label}Launcher.");
-        WriteInformation($"The compiled stub will launch the package: {stubInfo.PackageInfo.Name}");
+        WriteSuccessMessage($"Compiled {stubInfo.TargetPackage.Label}Launcher.");
+        WriteInformation($"The compiled stub will launch the package: {stubInfo.TargetPackage.Name}");
     }
 }
 
