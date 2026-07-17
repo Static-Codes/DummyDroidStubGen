@@ -27,12 +27,16 @@ public class JavaFileContent(List<JavaFileLine> lines)
 {
     private readonly List<JavaFileLine> Lines = lines;
 
+    /// <summary> The number of lines in the JavaFile. </summary>
     public int Length => Lines.Count;
     
+    /// <summary> Adds a line to the current JavaFileContent </summary>
     public void Add(JavaFileLine line) => Lines.Add(line);
 
+    /// <summary> Returns a list of JavaFileLines in the current JavaFileContent. </summary>
     public List<JavaFileLine> Get() => Lines;
 
+    /// <summary> Returns a list of strings representing each of the Lines in the current file. </summary>
     public List<string> GetLines() => [.. Lines.Select(line => line.Content)];
 }
 

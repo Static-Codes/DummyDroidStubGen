@@ -19,8 +19,19 @@ namespace DummyDroidStubGen.Core.Types.Packaging.Stub;
 
 public class StubInfo(Package targetPackage, Package stubPackage, FileStructure fileStructure, string profileID = "0")
 {
+    /// <summary> The Package the Stub will target/open. </summary>
     public Package TargetPackage = targetPackage;
+    
+    /// <summary> The Package object representing the Stub itself. </summary> 
     public Package StubPackage = stubPackage;
+
+    /// <summary> The file structure for the compiled stub. </summary>
     public FileStructure StubStructure = fileStructure;
+
+    /// <summary> 
+    ///     The profile ID where the stub will be involved. <br/>
+    ///     This will always almost be set to "0" indicating a personal profile. <br/>
+    ///     This can be set to "10" to indicate a work/sandboxed profile. <br/>
+    /// </summary>
     public string ProfileID = profileID;
 }
