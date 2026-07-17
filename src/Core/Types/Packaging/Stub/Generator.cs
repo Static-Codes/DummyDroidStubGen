@@ -52,7 +52,7 @@ public class Generator
         );
 
         // Populating then writing the three Java source files to disk.
-        PopulateSourceFiles(stubInfo.StubPackage);
+        PopulateSourceFiles(stubInfo.TargetPackage, stubInfo.StubPackage);
         WriteSourceFiles(stubInfo.StubStructure.Directories.JavaCode);
 
         WriteSuccessMessage($"Compiled {stubInfo.TargetPackage.Label}Launcher.");

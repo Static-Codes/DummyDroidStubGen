@@ -163,7 +163,7 @@ public class JavaCode
 
 
     /// <summary> Populates the contents of MainActivity.java using the provided package object. </summary>
-    private static void PopulateMainActivity(Package package) 
+    private static void PopulateMainActivity(Package targetPackage, Package stubPackage) 
     {
         if (!TryGetJavaFile("MainActivity.java", out var javaFile) || javaFile == null) {
             Environment.Exit(1);
@@ -191,7 +191,7 @@ public class JavaCode
         ];
 
 
-        WriteJavaFileHeader(javaFile, package, imports);        
+        WriteJavaFileHeader(javaFile, stubPackage, imports);        
         javaFile.AddClassName(
             className: "MainActivity", 
             extension: new JavaExtension(
@@ -203,8 +203,8 @@ public class JavaCode
         
         int tabs = 1;
 
-        javaFile.AddLine($"private final String appName = \"{package.Label}\";", tabs);
-        javaFile.AddLine($"private final String packageName = \"{package.Name}\";", tabs);
+        javaFile.AddLine($"private final String appName = \"{targetPackage.Label}\";", tabs);
+        javaFile.AddLine($"private final String packageName = \"{targetPackage.Name}\";", tabs);
         javaFile.AddEmptyLine();
 
         javaFile.AddLine("private PackageResult packageResult = null;", tabs);
@@ -291,11 +291,11 @@ public class JavaCode
     
 
     /// <summary> Populates the contents of the 3 required Java source files for the generated stub. </summmary>
-    public static void PopulateSourceFiles(Package package) 
+    public static void PopulateSourceFiles(Package targetPackage, Package stubPackage) 
     {
-        PopulateBlacklist(package);
-        PopulatePackageResult(package);
-        PopulateMainActivity(package);
+        PopulateBlacklist(stubPackage);
+        PopulatePackageResult(stubPackage);
+        PopulateMainActivity(targetPackage, stubPackage);
     }
     
     
