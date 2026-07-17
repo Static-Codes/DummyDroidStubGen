@@ -90,7 +90,7 @@ public static class InputHelper
                     opt.GetType() != typeof(string) ? 
                     opt.ToString().EscapeMarkup() : // Handling non string options
                     (string)opt // Handling string options
-                )
+                )   
             );
         
         // Adding the "Exit" menu option.

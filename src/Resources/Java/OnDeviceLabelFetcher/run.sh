@@ -93,7 +93,7 @@ fi
 APK_NAME=$(get_apk_name)
 PROFILE_ID="0"
 
-printf "[1/16] -> Attempting to uninstall package: %s\n" "$PKG_ID"
+printf "%s\n[1/16] -> Attempting to uninstall package: " "$PKG_ID"
 UNINSTALL_RESULT=$(adb shell pm uninstall --user "$PROFILE_ID" "$PKG_ID" 2>&1)
 if [ "$UNINSTALL_RESULT" = "adb: no devices/emulators found" ]; then 
     printf "Unable to locate any devices connected to adb, please try again.\n" >&2
@@ -101,35 +101,35 @@ if [ "$UNINSTALL_RESULT" = "adb: no devices/emulators found" ]; then
 fi
 sleep 1
 
-printf "\n[2/16] -> Compiling %s from source...\n" "$APP_NAME"
+printf "%s\n[2/16] -> Compiling %s from source..." "$APP_NAME"
 if ! "$SCRIPT_PATH" "$APP_NAME" "$PKG_DIR_STRUCTURE" "$APK_NAME" "$APP_DATA_DIR"; then    
     exit 1
 fi
 sleep 1
 
-printf "[13/16] -> Installing %s (%s) to device via adb...\n" "$APP_NAME" "$APK_NAME"
+printf "%s\n[13/16] -> Installing %s (%s) to device via adb..." "$APP_NAME" "$APK_NAME"
 if ! adb install --user "$PROFILE_ID" "$APK_NAME"; then
     exit 1
 fi
 sleep 1
 
-printf "\n[14/16] -> Executing %s on device via adb...\n" "$APP_NAME"
+printf "%s\n[14/16] -> Executing %s on device via adb..." "$APP_NAME"
 if ! adb shell am start -n "$PKG_ID/$PKG_ID.$APP_NAME"; then
     exit 1
 fi
 sleep 0.5
 
-printf "\n[15/16] -> Reading output from %s on device via adb...\n" "$APP_NAME"
-OUTPUT=$(adb shell run-as "$PKG_ID" cat "/data/data/$PKG_ID/files/list.txt")
+printf "%s\n[15/16] -> Reading output from %s on device via adb..." "$APP_NAME"
+OUTPUT=$(adb shell run-as "$PKG_ID" cat "/data/data/$PKG_ID/files/list.txt") || $(echo "error: package list not found" && exit 1)
 if [ -z "$OUTPUT" ]; then
     printf "Unable to process packages on the device.\n"
     exit 1
 fi
 sleep 0.5
 
-printf "\n[16/16] -> Removing %s (%s) from device via adb...\n" "$APP_NAME" "$APK_NAME"
+printf "%s\n[16/16] -> Removing %s (%s) from device via adb..." "$APP_NAME" "$APK_NAME"
 if ! adb shell pm uninstall --user "$PROFILE_ID" "$PKG_ID"; then
     exit 1
 fi
-printf "\n%s\n" "$OUTPUT"
+printf "%s\n" "$OUTPUT"
 exit 0

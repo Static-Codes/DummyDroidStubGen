@@ -144,7 +144,7 @@ public class Functions
     public static async Task HandleInstallationAsync(StubInfo stubInfo) 
     {
         var message = "Would you like to view the source code for the compiled stub before installing?";
-        string[] options = ["Yes (Requires manual installation)", "No, continue with the installation"];
+        string[] options = ["No, continue with the installation (Recommended)", "Yes (Requires manual installation)"];
 
         var confirmationSelection = AskForSelection(message, options);
 
@@ -397,6 +397,17 @@ public class Functions
         }
 
         var process = await RunProcessAsync(psi, inputArg: null, outputHandler, errorHandler);
+
+        if (process.Exception != null) {
+            throw process.Exception;
+        }
+
+        # if DEBUG
+            foreach (var line in process.Output) { WriteDebugMessage(line); }
+            foreach (var line in process.Error) { WriteDebugMessage(line); }
+        #endif
+
+        // return DoDeviceConnectionRegex(process);
 
         foreach (var line in process.Output) { Console.WriteLine(line); }
         foreach (var line in process.Error) { Console.WriteLine(line); }

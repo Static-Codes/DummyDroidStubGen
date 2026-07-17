@@ -85,27 +85,27 @@ fi
 
 mkdir -p $JAVA_OBJECT_DIR $JAVA_DEXOUT_DIR
 
-printf "%b" "\n[3/16] -> Compiling Resources for $APP_NAME...\n"
+printf "%s\n[3/16] -> Compiling Resources for $APP_NAME..."
 
 aapt2 compile --dir "$JAVA_RESOURCE_DIR" -o "$COMPILED_RESOURCES_PATH"
 
-printf "%b" "\n[4/16] -> Linking XML Manifest using aapt2...\n"
+printf "%s\n[4/16] -> Linking XML Manifest using aapt2..."
 aapt2 link --auto-add-overlay \
            --manifest "$ANDROID_MANIFEST_PATH" \
            -I "$ANDROID_JAR" \
            -R "$COMPILED_RESOURCES_PATH" \
            -o "$UNALIGNED_APK_PATH"
 
-printf "%b" "\n[5/16] -> Compiling Java to ByteCode using javac...\n"
+printf "%s\n[5/16] -> Compiling Java to ByteCode using javac..."
 javac -d obj --release 8 -classpath $ANDROID_JAR $JAVA_FILES_WILDCARD_PATH
    
-printf "%b" "\n[6/16] -> Converting ByteCode to Android Dex...\n"
+printf "%s\n[6/16] -> Converting ByteCode to Android Dex..."
 java -cp $D8_JAR com.android.tools.r8.D8 --lib $ANDROID_JAR --release --output $JAVA_DEXOUT_DIR $JAVA_CLASS_FILES_WILDCARD_PATH
   
-printf "%b" "\n[7/16] -> Packaging Output Dex Classes...\n"
+printf "%s\n[7/16] -> Packaging Output Dex Classes..."
 zip -uj "$UNALIGNED_APK_PATH" "$ANDROID_DEX_CLASS_PATH"
 
-printf "%b" "\n[8/16] -> Aligning APK...\n"
+printf "%s\n[8/16] -> Aligning APK..."
 # -P | Aligns uncompressed .so libraries page size to X KiB chunks.
 # 16 | Specifies the "X" in the "X KiB" above.
 # -f | Forces an overwright of aligned.apk (if a previous build failed)
@@ -118,12 +118,12 @@ printf "%b" "\n[8/16] -> Aligning APK...\n"
 # The next line should be uncommented, and the line below that should commented out.
 # if ! zipalign -P 16 -v 4 "$UNALIGNED_APK_PATH" "$ALIGNED_APK_PATH"
 if ! zipalign -f -v 4 "$UNALIGNED_APK_PATH" "$ALIGNED_APK_PATH"; then
-    printf "%b" "\nUnable to align compiled APK, please try again.\n" >&2
+    printf "%s\nUnable to align compiled APK, please try again." >&2
     exit 1
 fi
 
 
-printf "%b" "\n[9/16] -> Confirming Alignment...\n"
+printf "%s\n[9/16] -> Confirming Alignment..."
 # -c | Instructs zipalign to perform a confirmation instead of an overwrite
 # -P | Aligns uncompressed .so libraries page size to X KiB chunks.
 # 16 | Specifies the "X" in the "X KiB" above.

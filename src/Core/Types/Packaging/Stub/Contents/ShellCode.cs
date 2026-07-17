@@ -188,7 +188,7 @@ public class ShellCode
         shellFile.AddSleepCommand(seconds: 1, tabs);
 
         shellFile.AddEchoCommand(
-            "[13/16] -> Installing %s (%s) to device via adb...\\n \"$APP_NAME\" \"$APK_NAME\"", 
+            "[13/16] -> Installing %s (%s) to device via adb... \"$APP_NAME\" \"$APK_NAME\"", 
             escaped: true, 
             tabs
         );
@@ -257,7 +257,7 @@ public class ShellCode
     private static void WriteBuildScriptAlignmentBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user of the alignment process that is about to occur and documenting the different flags used.
-        shellFile.AddEchoCommand("\\n[8/16] -> Aligning APK...\\n");
+        shellFile.AddEchoCommand("[8/16] -> Aligning APK...", escaped: true, tabs);
         shellFile.AddComment("-P | Aligns uncompressed .so libraries page size to X KiB chunks.");
         shellFile.AddComment("16 | Specifies the \"X\" in the \"X KiB\" above.");
         shellFile.AddComment("-f | Forces an overwright of aligned.apk (if a previous build failed)");
@@ -270,13 +270,14 @@ public class ShellCode
         shellFile.AddComment("Maintainers Note:");
         shellFile.AddComment("If this project ever requires .so libraries:");
         shellFile.AddComment("The next line should be uncommented, and the line below that should commented out.");
-        shellFile.AddComment("if ! zipalign -P 16 -v 4 unaligned.apk aligned.apk");
+        // shellFile.AddComment("if ! zipalign -P 16 -v 4 unaligned.apk aligned.apk");
+        shellFile.AddComment("if ! zipalign -P 16 4 unaligned.apk aligned.apk");
         
         // Aligning the APK at aligned.apk
-        shellFile.AddLine("if ! zipalign -f -v 4 unaligned.apk aligned.apk; then");
+        shellFile.AddLine("if ! zipalign -f 4 unaligned.apk aligned.apk; then");
 
         tabs++; // Increasing tabs 0 -> 1
-        shellFile.AddEchoCommand("\\nUnable to align compiled APK, please try again.\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("Unable to align compiled APK, please try again.", escaped: true, tabs);
         shellFile.AddExitCommand(status: 1, tabs);
 
         tabs--; // Decreasing tabs 1 -> 0
@@ -289,7 +290,7 @@ public class ShellCode
     private static void WriteBuildScriptConfirmationBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user of the confirmation process that is about to occur and documenting the different flags used.
-        shellFile.AddEchoCommand("\\n[9/16] -> Confirming Alignment...\\n");
+        shellFile.AddEchoCommand("[9/16] -> Confirming Alignment...");
         shellFile.AddComment(" -c | Instructs zipalign to perform a confirmation instead of an overwrite");
         shellFile.AddComment(" -P | Aligns uncompressed .so libraries page size to X KiB chunks.");
         shellFile.AddComment(" 16 | Specifies the \"X\" in the \"X KiB\" above.");
@@ -308,13 +309,13 @@ public class ShellCode
         shellFile.AddLine("if zipalign -c -v 4 aligned.apk; then");
         tabs++; // Increasing tabs 0 -> 1
 
-        shellFile.AddEchoCommand("\\nAlignment Confirmed!", escaped: true, tabs);
+        shellFile.AddEchoCommand("Alignment Confirmed!", escaped: true, tabs);
         
         tabs--; // Decreasing tabs 1 -> 0
         shellFile.AddLine("else", tabs);
         
         tabs++; // Increasing tabs 0 -> 1
-        shellFile.AddEchoCommand("\\nIncorrect Alignment Detected!", escaped: true, tabs);
+        shellFile.AddEchoCommand("Incorrect Alignment Detected!", escaped: true, tabs);
         shellFile.AddExitCommand(status: 1, tabs);
         
         tabs--; // Decreasing tabs 1 -> 0
@@ -322,7 +323,7 @@ public class ShellCode
         shellFile.AddEmptyLine();
 
         // Notifying the user that the unaligned APK is being removed
-        shellFile.AddEchoCommand("\\n[10/16] -> Removing Unaligned APK...");
+        shellFile.AddEchoCommand("[10/16] -> Removing Unaligned APK...");
         shellFile.AddCommand(command: "rm", [ 
             new ShellCommandArgument(Flag: "-f", Value: "unaligned.apk")
         ]);
@@ -333,7 +334,7 @@ public class ShellCode
     /// <summary> Writes the APK compilation block to the provided shellFile. </summary>
     private static void WriteBuildScriptCompilationBlock(ShellFile shellFile, int tabs) 
     {
-        shellFile.AddEchoCommand("\\n[5/16] -> Compiling stub from source using javac...\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("[5/16] -> Compiling stub from source using javac...", escaped: true, tabs);
         // Compiling the stub's Java source files.
         // javac -d obj --release 8 -classpath {AndroidSDKJarPath} src/main/\"$PKG_DIR_STRUCTURE\"/*.java
         shellFile.AddCommand(command: "javac", arguments: [
@@ -349,7 +350,7 @@ public class ShellCode
     /// <summary> Writes the Java byte code conversion block to the provided shellFile. </summary>
     private static void WriteBuildScriptConversionBlock(ShellFile shellFile, int tabs) 
     {
-        shellFile.AddEchoCommand("\\n[6/16] -> Converting Java ByteCode to Android Dex...\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("[6/16] -> Converting Java ByteCode to Android Dex...", escaped: true, tabs);
         // java -cp {AndroidR8JarPath} // 
         //      com.android.tools.r8.D8 //
         //      --lib {AndroidSDKJarPath} //
@@ -402,8 +403,8 @@ public class ShellCode
     /// <summary> Writes the Android Manifest linking block to the provided shellFile. </summary>
     private static void WriteBuildScriptManifestLinkBlock(ShellFile shellFile, int tabs) 
     {
-        // echo -e \"\\n[4/16] -> Linking XML Manifest using aapt2...\\n\"
-        shellFile.AddEchoCommand("\\n[4/16] -> Linking XML Manifest using aapt2...\\n", escaped: true, tabs);
+        // echo -e \"[4/16] -> Linking XML Manifest using aapt2...\"
+        shellFile.AddEchoCommand("[4/16] -> Linking XML Manifest using aapt2...", escaped: true, tabs);
 
         // Linking the project's resources
         // aapt2 link --auto-add-overlay \\
@@ -425,7 +426,7 @@ public class ShellCode
     /// <summary> Writes the Android Dex class packaging block to the specified shellFile. </summary>
     private static void WriteBuildScriptPackagingBlock(ShellFile shellFile, int tabs) 
     {
-        shellFile.AddEchoCommand("\\n[7/16] -> Packaging Output Dex Classes...\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("[7/16] -> Packaging Output Dex Classes...", escaped: true, tabs);
         
         // Packaging the dex output class
         // zip -uj unaligned.apk dex_out/classes.dex
@@ -446,8 +447,8 @@ public class ShellCode
         shellFile.AddMkdirCommand(directories: ["obj", "dex_out"], createParents: true);
         shellFile.AddEmptyLine();
 
-        // echo -e \"\\n[3/16] -> Compiling Resources for $APP_NAME...\\n\"
-        shellFile.AddEchoCommand("[3/16] -> Compiling Resources for $APP_NAME...\\n", escaped: true, tabs);
+        // echo -e \"[3/16] -> Compiling Resources for $APP_NAME...\"
+        shellFile.AddEchoCommand("[3/16] -> Compiling Resources for $APP_NAME...", escaped: true, tabs);
 
         // Compiling the stub's resources to compiled_resources.zip
         // aapt2 compile --dir \"$PROJECT_ROOT/src/main/res\" -o \"$PROJECT_ROOT/compiled_resources.zip\"
@@ -463,7 +464,7 @@ public class ShellCode
     private static void WriteBuildScriptSigningBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user that the aligned APK is going to be signed.
-        shellFile.AddEchoCommand("\\n[11/16] -> Signing APK...\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("[11/16] -> Signing APK...", escaped: true, tabs);
 
         // Checking if the debug.keystore file exists, if not it is generated.
         shellFile.AddLine("if [ ! -f \"debug.keystore\" ]; then", tabs);
@@ -512,7 +513,7 @@ public class ShellCode
     private static void WriteBuildScriptCleanupBlock(ShellFile shellFile, ref int tabs) 
     {
         // Notifying the user that leftover build artifacts will be removed.
-        shellFile.AddEchoCommand("\\n[12/16] -> Removing leftover build artifacts...\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("[12/16] -> Removing leftover build artifacts...", escaped: true, tabs);
         
         // Removes the leftover build artifacts, exits if this fails.
         shellFile.AddLine("if ! rm -rf \"$APK_NAME.idsig\" aligned.apk unaligned.apk compiled_resources.zip dex_out obj; then");
@@ -526,7 +527,7 @@ public class ShellCode
         shellFile.AddEmptyLine();
         
         // Notifies the user that the build process has been completed.
-        shellFile.AddEchoCommand("Build finalized for $APP_NAME!\\n", escaped: true, tabs);
+        shellFile.AddEchoCommand("Build finalized for $APP_NAME!", escaped: true, tabs);
     }
 
 
