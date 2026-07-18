@@ -5,22 +5,12 @@ DDSG (**DummyDroidStubGen**) is a simple, yet versatile linux app to generate *"
 ## Use Cases
 While there are a variety of use cases for **DDSG**, it was originally developed to reintroduce more granular gesture controls to [Lawnchair](https://github.com/LawnchairLauncher/lawnchair/). Specifically, a double-tap gesture to open a sandboxed application (One that is installed in the work profile through services like [Insular](https://github.com/proletarius101/Insular), [Island](https://github.com/oasisfeng/island), etc).
 
-## Note:
-> [!IMPORTANT]
-> Please read about the [Keep Android Open](https://keepandroidopen.org/) project.
+## Backstory
+With the release of Lawnchair 15 Beta, the entire codebase was reworked.
+This reworking affected more than just gesture controls, however, these other changes aren't relevant to **DDSG**.
 
-## Hardware Requirements
-- **Android 5.0 (Lollipop) or newer**
-- **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
+For more information on the changes from Lawnchair 14 and Lawnchair 15, click [here](./BACKSTORY.md)
 
-## Dependencies
-- aapt2
-- adb
-- apksigner
-- java (8+)
-- javac
-- unzip
-- zip
 
 ## Features
 - Completely De-Googled*
@@ -37,12 +27,16 @@ While there are a variety of use cases for **DDSG**, it was originally developed
 ## Restrictions
 DDSG has a set of blacklisted apps that cannot be used to create a stub. For more information on the blacklist, click [here](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/FAQ.md#q-why-are-there-restrictions-on-the-apps-ddsg-can-open)
 
+## Installation
+For steps on installing DDSG, please click [here](./docs/INSTALL.MD)
+
+## Hardware Requirements
+- **Android 5.0 (Lollipop) or newer**
+- **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
+
+## Note:
+> [!IMPORTANT]
+> Please read about the [Keep Android Open](https://keepandroidopen.org/) project.
 
 ## FAQ
 Click [here](./FAQ.md) to see the dedicated FAQ page
-
-## Backstory
-With the release of Lawnchair 15 Beta, the entire codebase was reworked.
-This reworking affected more than just gesture controls, however, these other changes aren't relevant to **DDSG**.
-
-For more information on the changes from Lawnchair 14 and Lawnchair 15, click [here](./BACKSTORY.md)
