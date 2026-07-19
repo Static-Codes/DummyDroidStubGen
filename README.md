@@ -15,14 +15,23 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, click [h
 ## Features
 - Completely De-Googled*
 
+<details open>
+<summary>Click for more details</summary>
+
 > DDSG contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Package.cs#L81) that makes a request to `play.google.com` to prevent duplicate package generation, however, this is disabled by default.
 
 > DDSG also contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Stub/FileStructure.cs#L232) that allows the user to convert an SVG to Android's Native VectorDrawable. This feature relies on [code](https://android.googlesource.com/platform/tools/base/+/refs/heads/main/sdk-common/src/main/java/com/android/ide/common/vectordrawable/) that was released with Android's Vector Studio, however, the precompiled binary does not make any network requests, or contain any storage capabilities. For more information on the SVG to VectorDrawable XML conversion, click [here](https://github.com/Static-Codes/vd-tool-builder)
+</details>
 
 - No Invasive Permissions
 
 - Customizable Icons
+
+<details open>
+<summary>Click for more details</summary>
+
 > DDSG supports `.SVG`, `.XML` (DrawableVector), and `.WEBP` for the generated stub!
+</details>
 
 ## Restrictions
 DDSG has a set of blacklisted apps that cannot be used to create a stub. For more information on the blacklist, click [here](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/FAQ.md#q-why-are-there-restrictions-on-the-apps-ddsg-can-open)
