@@ -22,7 +22,7 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, click [h
 
     > DDSG also contains a [feature](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/src/Core/Types/Packaging/Stub/FileStructure.cs#L232) that allows the user to convert an SVG to Android's Native VectorDrawable. This feature relies on [code](https://android.googlesource.com/platform/tools/base/+/refs/heads/main/sdk-common/src/main/java/com/android/ide/common/vectordrawable/) that was released with Android's Vector Studio, however, the precompiled binary does not make any network requests, or contain any storage capabilities. For more information on the SVG to VectorDrawable XML conversion, click [here](https://github.com/Static-Codes/vd-tool-builder)
 
-    </details><br>
+    </details>
 
 - Customizable Icons
 
@@ -30,7 +30,7 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, click [h
     <summary>Click for more details</summary>
 
     > DDSG supports `.SVG`, `.XML` (DrawableVector), and `.WEBP` for the generated stub!
-    </details><br>
+    </details>
 
 - No Invasive Permissions
 
