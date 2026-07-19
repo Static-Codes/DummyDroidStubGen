@@ -65,5 +65,7 @@ EOF
 sudo chmod +x "$APKSIGN_BIN_PATH" || { echo "Failed to provide the APKSigner wrapper with executable permissions" && exit 1; }
 
 echo "Installed APKSigner to $APKSIGN_BIN_PATH"
+
+rm -rf $TEMP_INSTALL_DIR || { echo "Failed to remove the temporary installation directory, please run: rm -rf $TEMP_INSTALL_DIR" && exit 1; }
 fi
 
