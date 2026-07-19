@@ -16,7 +16,10 @@
 sudo apt-get update && sudo apt install -y aapt2 adb apksigner java javac unzip zip
 ```
 
-<!-- #### Fedora  -->
+#### Fedora 
+```bash
+sudo dnf install -y android-tools java-21-openjdk-devel unzip zip
+```
 
 #### CentOS
 Note: While CentOS is a Fedora Based Distro, its package repository is handled differently. As such, an installer script is required to simplify this process.
