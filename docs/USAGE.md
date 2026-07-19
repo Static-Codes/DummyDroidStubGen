@@ -6,7 +6,7 @@ Before continuing, please ensure you've completed the installation process, it c
 
 ## Connection Information
 
-<details open>
+<details>
 <summary>Connecting over USB</summary>
 
 #### USB Cable and Port information.
@@ -39,7 +39,7 @@ Before continuing, please ensure you've completed the installation process, it c
 ---
 
 
-<details open>
+<details>
 <summary>Connecting over WIFI</summary>
 
 #### Configuring your Device
@@ -63,7 +63,7 @@ Before continuing, please ensure you've completed the installation process, it c
 
 ## Usage Information
 
-<details open>
+<details>
 <summary>Click to see detailed usage information</summary>
 
 1. Start DDSG.
