@@ -407,15 +407,12 @@ public class Functions
             foreach (var line in process.Error) { WriteDebugMessage(line); }
         #endif
 
-        // return DoDeviceConnectionRegex(process);
-
+        if (process.ExitCode != 0){
+            foreach (var line in process.Error) { Console.WriteLine(line); }
+            Environment.Exit(1);
+        }
+    
         foreach (var line in process.Output) { Console.WriteLine(line); }
-        foreach (var line in process.Error) { Console.WriteLine(line); }
-        Console.WriteLine();
-        Console.WriteLine("Exit: " + process.ExitCode);
-
-        
-
 
     }
 
