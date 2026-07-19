@@ -9,7 +9,7 @@ While there are a variety of use cases for **DDSG**, it was originally developed
 With the release of Lawnchair 15 Beta, the entire codebase was reworked.
 This reworking affected more than just gesture controls, however, these other changes aren't relevant to **DDSG**.
 
-For more information on the changes from Lawnchair 14 and Lawnchair 15, click [here](./BACKSTORY.md)
+For more information on the changes from Lawnchair 14 and Lawnchair 15, click [here](./docs/BACKSTORY.md)
 
 
 ## Features
@@ -28,15 +28,18 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, click [h
 DDSG has a set of blacklisted apps that cannot be used to create a stub. For more information on the blacklist, click [here](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/FAQ.md#q-why-are-there-restrictions-on-the-apps-ddsg-can-open)
 
 ## Installation
-For steps on installing DDSG, please click [here](./docs/INSTALL.MD)
+DDSG provides a dedicated installer page for many linux distros, this can be found [here](./docs/INSTALL.md).
+
+## Usage
+For information on using DDSG, please click [here](./docs/USAGE.md).
 
 ## Hardware Requirements
 - **Android 5.0 (Lollipop) or newer**
 - **A machine running linux that is atleast as powerful as a [Raspberry PI 3 Model B](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)**
 
-## Note:
+## FAQ
+Click [here](./docs/FAQ.md) to see the dedicated FAQ page
+
+## Note
 > [!IMPORTANT]
 > Please read about the [Keep Android Open](https://keepandroidopen.org/) project.
-
-## FAQ
-Click [here](./FAQ.md) to see the dedicated FAQ page
