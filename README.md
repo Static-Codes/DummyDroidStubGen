@@ -36,7 +36,7 @@ For more information on the changes from Lawnchair 14 and Lawnchair 15, click [h
 
 
 ## Restrictions
-DDSG has a set of blacklisted apps that cannot be used to create a stub. For more information on the blacklist, click [here](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/FAQ.md#q-why-are-there-restrictions-on-the-apps-ddsg-can-open)
+DDSG has a set of blacklisted apps that cannot be used to create a stub. For more information on the blacklist, click [here](https://github.com/Static-Codes/DummyDroidStubGen/blob/main/docs/FAQ.md#q-why-are-there-restrictions-on-the-apps-ddsg-can-open)
 
 ## Installation
 DDSG provides a dedicated installer page for many linux distros, this can be found [here](./docs/INSTALL.md).
